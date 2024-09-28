@@ -1,0 +1,43 @@
+package com.nekitvp.marathonbot.handler;
+
+import com.nekitvp.marathonbot.enumBot.StateBot;
+import com.nekitvp.marathonbot.model.UserEntity;
+import com.nekitvp.marathonbot.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.Message;
+
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static com.nekitvp.marathonbot.enumBot.StateBot.ADMIN_MAIN;
+import static com.nekitvp.marathonbot.util.TelegramUtil.getNumberSpase;
+
+
+@Component
+@RequiredArgsConstructor
+public class AdminListUserAllCountHandler implements Handler {
+
+    private final UserService userService;
+
+    @Override
+    public StateBot getCurrentState() {
+        return StateBot.ADMIN_LIST_USERS_ALL_COUNT;
+    }
+
+    @Override
+    public Object handle(Message message) {
+        var keyboard = getKeyboardDefault(ADMIN_MAIN);
+        var users = userService.getAllUsers();
+        String text = users.stream()
+                .sorted(Comparator.comparingLong(UserEntity::getCountChangeStateAll).reversed())
+                .map(user -> String.format("%s %s| %s%s",
+                        user.getCountChangeStateAll(),
+                        getNumberSpase(user.getCountChangeStateAll()),
+                        Objects.isNull(user.getTelegramUserName()) ? "" : "@" + user.getTelegramUserName() + " ",
+                        user.getTelegramFirstName()))
+                .collect(Collectors.joining("\n"));
+        return getDefaultMessage(message, keyboard, text);
+    }
+}
