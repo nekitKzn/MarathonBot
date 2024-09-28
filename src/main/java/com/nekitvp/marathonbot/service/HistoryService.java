@@ -18,6 +18,8 @@ public class HistoryService {
 
     private final HistoryRepository historyRepository;
     private final GoalService goalService;
+    private final UserService userService;
+    private final LetterSender letterSender;
 
     @Transactional
     public List<Pair<String, Boolean>> createHistoryGoal(Long telegramId, List<Integer> optionIds) {
@@ -48,5 +50,15 @@ public class HistoryService {
             return false;
         }
         return lastHistoryByTelegramId.getCreatedAt().toLocalDate().equals(LocalDateTime.now().toLocalDate());
+    }
+
+    @Transactional(readOnly = true)
+    public void sendWhoDidNotSetReport() {
+        userService.getUsers().forEach(user -> {
+            var needNotification = !checkExistHistoryToday(user.getTelegramId());
+            if (needNotification) {
+                letterSender.sendWhoDidNotSetReport(user);
+            }
+        });
     }
 }

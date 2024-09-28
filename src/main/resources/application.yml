@@ -1,6 +1,6 @@
-bot: # t.me/marathon_discipline_bot
-  name: Марафон Бот
-  token: 7902962180:AAG7L0rvWm0rYyg4f27BcvPbOArvwx-Wipk
+bot: # t.me/marathon_discipline_develop_bot
+  name: Марафон Бот DEVELOP
+  token: 7667747050:AAHSlaIf0nrHQFa0bDD0mWtFHeHWXrZPD2k
   groupChatId: -4544131736
 spring:
   datasource:

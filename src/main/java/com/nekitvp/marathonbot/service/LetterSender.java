@@ -1,6 +1,7 @@
 package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.event.SendTelegramMessageEvent;
+import com.nekitvp.marathonbot.model.UserEntity;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -39,5 +40,11 @@ public class LetterSender {
     private void publish(Long to, String template, Object... args) {
         String text = isEmpty(args) ? template : String.format(template, args);
         publisher.publishEvent(new SendTelegramMessageEvent(this, text, to));
+    }
+
+    public void sendWhoDidNotSetReport(UserEntity user) {
+        var text = "Брат, %s! \uD83D\uDCAA Не вижу еще твоего отчета! Жду с нетерпением! \n\nБеспокоюсь о твоем финансовом положении \uD83D\uDCB5";
+        log.info("Напоминание отправлено пользователю {}", user.getTelegramFirstName());
+        publish(user.getTelegramId(), text, user.getTelegramFirstName());
     }
 }
