@@ -46,7 +46,7 @@ public class UpdateHandler {
 
             StateBot state = userService.getUserState(update.getMessage().getFrom().getId(), message);
             logSendText(message, state);
-            return stateToHandlerMap.get(state).handle(message);
+            return stateToHandlerMap.get(state).handle(update);
 
         } else if (update.hasCallbackQuery()) { //нажата кнопка
 
@@ -56,7 +56,7 @@ public class UpdateHandler {
             if (Objects.nonNull(state)) { // значит нажата кнопка с состоянием
                 logPressedButton(update, state);
                 StateBot actualState = userService.updateUserState(telegramUserId, state);
-                return stateToHandlerMap.get(actualState).handle((Message) update.getCallbackQuery().getMessage());
+                return stateToHandlerMap.get(actualState).handle(update);
 
             } else { // значит выбран как либо вариант или функция
                 FunctionBot function = FunctionBot.getFunctionBotByCallBackQuery(update.getCallbackQuery().getData());
@@ -64,7 +64,7 @@ public class UpdateHandler {
                 if (Objects.nonNull(function)) { // нажата функция
                     function.getFunction().accept(functionService);
                     userService.updateUserState(telegramUserId, function.getStateBot());
-                    return stateToHandlerMap.get(function.getStateBot()).handle((Message) update.getCallbackQuery().getMessage());
+                    return stateToHandlerMap.get(function.getStateBot()).handle(update);
                 } else { // выбран id
                     StateBot stateBot = userService.findByTelegramId(telegramUserId).getState();
                     StateBot newState = stateToHandlerMap.get(stateBot).getNextState();
@@ -72,7 +72,7 @@ public class UpdateHandler {
                         userService.updateUserState(telegramUserId, newState);
                         Message message = (Message) update.getCallbackQuery().getMessage();
                         message.setText(update.getCallbackQuery().getData());
-                        return stateToHandlerMap.get(newState).handle(message);
+                        return stateToHandlerMap.get(newState).handle(update);
                     }
                 }
             }
@@ -84,7 +84,7 @@ public class UpdateHandler {
             StateBot newState = stateToHandlerMap.get(stateBot).getNextState();
             if (Objects.nonNull(newState)) {
                 userService.updateUserState(telegramUserId, newState);
-                return stateToHandlerMap.get(newState).handle(update.getMessage());
+                return stateToHandlerMap.get(newState).handle(update);
             }
         } else if (update.hasPollAnswer()) {
             log.info("Пришел опрос от " + update.getPollAnswer().getUser().getFirstName());
@@ -93,7 +93,7 @@ public class UpdateHandler {
             StateBot newState = stateToHandlerMap.get(stateBot).getNextState();
             if (Objects.nonNull(newState)) {
                 userService.updateUserState(telegramUserId, newState);
-                return stateToHandlerMap.get(newState).handle(update.getMessage());
+                return stateToHandlerMap.get(newState).handle(update);
             }
 
 

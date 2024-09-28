@@ -25,7 +25,6 @@ public class ServiceEventListener {
         try {
             telegramBot.execute(
                     SendMessage.builder()
-                            .replyToMessageId(event.getReplyMessageId())
                             .text(event.getText())
                             .chatId(event.getChatId())
                             .build()

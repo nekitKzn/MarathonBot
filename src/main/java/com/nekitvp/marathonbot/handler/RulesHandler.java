@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
@@ -19,7 +20,10 @@ public class RulesHandler implements Handler{
     }
 
     @Override
-    public Object handle(Message message) {
+    public Object handle(Update update) {
+
+        var message = getMessage(update);
+
         var replyKeyboard = InlineKeyboardMarkup.builder()
                 .keyboard(List.of(
                                 List.of(createButtonByState(StateBot.START))

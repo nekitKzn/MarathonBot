@@ -33,7 +33,7 @@ public class GoalEntity {
     private String name;
 
     @Column(name = "position", nullable = false)
-    private Long position;
+    private Integer position;
 
 //    @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
 //    private List<History> history;

@@ -12,7 +12,7 @@ import java.util.Arrays;
 public enum StateBot {
 
     START("""
-            Привет! Я Бот-Марафон! 🤲 
+            Привет, %s! Я Бот-Марафон! 🤲 
             Мы вместе развиваем дисциплину
             Я помогу тебе делать отчеты и следить за твоими успехами!
             
@@ -70,7 +70,7 @@ public enum StateBot {
 
     REPORT("", "Заполнить отчет"),
 
-    REPORT_SEND("Отчет отправлен! ", null),
+    REPORT_SEND("Отчет отправлен! Ты молодец \uD83D\uDCAA ", null),
 
     ADMIN_MAIN("\uD83E\uDE84\uD83E\uDE84\uD83E\uDE84Панель администратора!" +
             "\uD83E\uDE84\uD83E\uDE84\uD83E\uDE84", "⬅️"),

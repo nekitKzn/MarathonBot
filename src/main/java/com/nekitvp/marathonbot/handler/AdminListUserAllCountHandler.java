@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.telegram.telegrambots.meta.api.objects.Update;
 
 import static com.nekitvp.marathonbot.enumBot.StateBot.ADMIN_MAIN;
 import static com.nekitvp.marathonbot.util.TelegramUtil.getNumberSpase;
@@ -27,7 +28,9 @@ public class AdminListUserAllCountHandler implements Handler {
     }
 
     @Override
-    public Object handle(Message message) {
+    public Object handle(Update update) {
+
+        var message = getMessage(update);
         var keyboard = getKeyboardDefault(ADMIN_MAIN);
         var users = userService.getAllUsers();
         String text = users.stream()

@@ -3,13 +3,9 @@ package com.nekitvp.marathonbot.handler;
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-
-import java.util.List;
+import org.telegram.telegrambots.meta.api.objects.Update;
 
 import static com.nekitvp.marathonbot.enumBot.StateBot.START;
-import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 
 @Component
@@ -23,12 +19,10 @@ public class AboutHandler implements Handler {
     }
 
     @Override
-    public Object handle(Message message) {
+    public Object handle(Update update) {
 
-        var keyboard = InlineKeyboardMarkup.builder()
-                .keyboard(List.of(
-                        List.of(createButtonByState(START))))
-                .build();
+        var message = getMessage(update);
+        var keyboard = getKeyboardDefault(START);
 
         return getDefaultMessage(message, keyboard);
     }

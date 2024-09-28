@@ -22,9 +22,9 @@ CREATE TABLE "goal"
 
 CREATE TABLE "history"
 (
-    "id"         BIGINT                         NOT NULL PRIMARY KEY,
+    "id"         SERIAL                         NOT NULL PRIMARY KEY,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    "update_at"  TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     "goal_id"    BIGINT                         NOT NULL REFERENCES "goal" ("id"),
     "done"       BOOLEAN                        NULL
 );

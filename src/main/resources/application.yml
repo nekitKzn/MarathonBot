@@ -1,8 +1,7 @@
 bot: # t.me/marathon_discipline_bot
   name: Марафон Бот
   token: 7902962180:AAG7L0rvWm0rYyg4f27BcvPbOArvwx-Wipk
-  groupChatId: -100202343432
-  replyMessageId: 185
+  groupChatId: -4544131736
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:marathonBD}

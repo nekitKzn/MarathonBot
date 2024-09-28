@@ -4,6 +4,7 @@ import com.nekitvp.marathonbot.enumBot.StateBot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.util.List;
@@ -21,7 +22,9 @@ public class StartHandler implements Handler {
     }
 
     @Override
-    public Object handle(Message message) {
+    public Object handle(Update update) {
+
+        var message = getMessage(update);
 
         var replyKeyboard = InlineKeyboardMarkup.builder()
                 .keyboard(List.of(
@@ -31,6 +34,6 @@ public class StartHandler implements Handler {
                         )
                 ).build();
 
-        return getDefaultMessage(message, replyKeyboard);
+        return getDefaultMessage(message, replyKeyboard, message.getChat().getFirstName());
     }
 }

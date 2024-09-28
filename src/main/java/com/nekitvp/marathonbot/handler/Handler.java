@@ -22,7 +22,7 @@ public interface Handler {
         return null;
     }
 
-    Object handle(Message message);
+    Object handle(Update update);
 
     default Object getDefaultMessage(Message message, InlineKeyboardMarkup keyboard, Object... args) {
         String text = isEmpty(args) ? getCurrentState().getMessage() : String.format(getCurrentState().getMessage(), args);
@@ -55,5 +55,9 @@ public interface Handler {
         return InlineKeyboardMarkup.builder().keyboard(Arrays.stream(stateBot)
                 .map(state -> List.of(createButtonByState(state)))
                 .toList()).build();
+    }
+
+    default Message getMessage(Update update) {
+        return update.hasCallbackQuery() ? (Message) update.getCallbackQuery().getMessage() : update.getMessage();
     }
 }
