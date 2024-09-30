@@ -1,6 +1,7 @@
 package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.event.SendTelegramMessageEvent;
+import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,11 +31,7 @@ public class LetterSender {
 
     public void sendReport(String name, List<Pair<String, Boolean>> report) {
 
-        StringBuilder reportBuilder = new StringBuilder();
-        var date = LocalDateTime.now();
-        reportBuilder.append("Отчет: ").append(name).append("\n");
-        reportBuilder.append("Дата: ").append(date.toLocalDate());
-        reportBuilder.append(" ").append(date.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("\n\n");
+        StringBuilder reportBuilder = getShapka(name);
 
         for (Pair<String, Boolean> entry : report) {
             String result = Boolean.TRUE.equals(entry.getSecond()) ? "✅" : "❌";
@@ -43,6 +40,15 @@ public class LetterSender {
 
         String text = reportBuilder.toString();
         publisher.publishEvent(new SendTelegramMessageEvent(this, text, groupChatId));
+    }
+
+    private static StringBuilder getShapka(String name) {
+        StringBuilder reportBuilder = new StringBuilder();
+        var date = LocalDateTime.now();
+        reportBuilder.append("Отчет: ").append(name).append("\n");
+        reportBuilder.append("Дата: ").append(date.toLocalDate());
+        reportBuilder.append(" ").append(date.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("\n\n");
+        return reportBuilder;
     }
 
     private void publish(Long to, String template, Object... args) {
@@ -78,5 +84,26 @@ public class LetterSender {
 
         log.info("Напоминание отправлено пользователю {}: {}", user.getTelegramFirstName(), randomPhrase);
         publish(user.getTelegramId(), randomPhrase, user.getTelegramFirstName());
+    }
+
+    public void sendBadReport(UserEntity user, List<GoalEntity> goals) {
+        StringBuilder reportBuilder = getShapka(user.getTelegramFirstName());
+
+        reportBuilder.append("Увы, братишка не справился! \uD83E\uDD72").append("\n\n");
+
+        var list = goals.stream()
+                .filter(goal -> goal.getPosition() != 5)
+                .toList();
+
+        for (GoalEntity goal : list) {
+            reportBuilder.append("❓").append(" - ").append(goal.getName()).append("\n");
+        }
+
+        reportBuilder.append("❌").append(" - ").append("Отчет");
+
+        String text = reportBuilder.toString();
+        publisher.publishEvent(new SendTelegramMessageEvent(this, text, groupChatId));
+
+
     }
 }

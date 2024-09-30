@@ -32,6 +32,6 @@ public class HistoryEntity extends AbstractEntity{
     @JoinColumn(name = "goal_id", nullable = false)
     private GoalEntity goal;
 
-    @Column(name = "done", nullable = false)
+    @Column(name = "done")
     private Boolean done;
 }

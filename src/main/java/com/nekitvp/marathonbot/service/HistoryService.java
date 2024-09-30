@@ -4,7 +4,9 @@ package com.nekitvp.marathonbot.service;
 import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.model.HistoryEntity;
 import com.nekitvp.marathonbot.repository.HistoryRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -45,11 +47,9 @@ public class HistoryService {
     }
 
     public boolean checkExistHistoryToday(Long telegramId) {
-        var lastHistoryByTelegramId = historyRepository.findLastByTelegramId(telegramId);
-        if (lastHistoryByTelegramId == null) {
-            return false;
-        }
-        return lastHistoryByTelegramId.getCreatedAt().toLocalDate().equals(LocalDateTime.now().toLocalDate());
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        return historyRepository.existsByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay);
     }
 
     @Transactional(readOnly = true)
@@ -58,6 +58,33 @@ public class HistoryService {
             var needNotification = !checkExistHistoryToday(user.getTelegramId());
             if (needNotification) {
                 letterSender.sendWhoDidNotSetReport(user);
+            }
+        });
+    }
+
+    @Transactional
+    public void createHistoryWhoFogot() {
+        LocalDateTime endOfDay = LocalDateTime.now();
+        LocalDateTime startOfDay = endOfDay.minusDays(1);
+        userService.getUsers().forEach(user -> {
+            var exitReport = historyRepository.existsByTelegramIdAndCreatedAtBetween(user.getTelegramId(), startOfDay,
+                    endOfDay);
+
+            if (!exitReport) {
+                var goals = goalService.getGoalByUser(user.getTelegramId());
+                goals.stream()
+                        .filter(goal -> goal.getPosition() != 5)
+                        .forEach(goal -> {
+                            var history = createHistoryGoal(goal, null);
+                            historyRepository.save(history);
+                        });
+                var goal5 = goals.stream()
+                        .filter(goal -> goal.getPosition() == 5)
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("Goal 5 not found"));
+                var history = createHistoryGoal(goal5, false);
+                historyRepository.save(history);
+                letterSender.sendBadReport(user, goals);
             }
         });
     }

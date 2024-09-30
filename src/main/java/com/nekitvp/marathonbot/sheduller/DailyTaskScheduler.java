@@ -13,10 +13,21 @@ public class DailyTaskScheduler {
 
     private final HistoryService historyService;
 
-    // Метод будет запускаться каждый день в 11 вечера
+    /**
+     * Метод будет запускаться каждый день в 10 вечера и отпрввлять напоминание тем, кто не отправил отчет
+     */
     @Scheduled(cron = "0 0 22 * * ?", zone = "Europe/Moscow")
-    public void runTaskEveryDayAt11PM() {
+    public void runTaskEveryDayAt10PM() {
         log.info("Scheduler Notification started...");
         historyService.sendWhoDidNotSetReport();
+    }
+
+    /**
+     * Метод будет запускаться каждый день в 00:00 и отправляет отчеты за тех, кто это не сделал
+     */
+    @Scheduled(cron = "0 0 0 * * ?", zone = "Europe/Moscow")
+    public void runTaskEveryDayAt00() {
+        log.info("Scheduler Reports started...");
+        historyService.createHistoryWhoFogot();
     }
 }
