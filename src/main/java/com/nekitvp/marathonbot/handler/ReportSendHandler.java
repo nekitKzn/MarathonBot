@@ -33,7 +33,9 @@ public class ReportSendHandler implements Handler {
 
         List<Pair<String, Boolean>> report = historyService.createHistoryGoal(telegramId, poll.getOptionIds());
 
-        letterSender.sendReport(poll.getUser().getFirstName(), report);
+        var user = userService.getUser(telegramId);
+        var name = user == null ? poll.getUser().getFirstName() : user.getTelegramFirstName();
+        letterSender.sendReport(name, report);
 
         userService.updateUserState(telegramId, StateBot.START);
         return SendMessage.builder()

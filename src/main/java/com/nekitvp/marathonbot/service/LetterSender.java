@@ -104,6 +104,5 @@ public class LetterSender {
         String text = reportBuilder.toString();
         publisher.publishEvent(new SendTelegramMessageEvent(this, text, groupChatId));
 
-
     }
 }

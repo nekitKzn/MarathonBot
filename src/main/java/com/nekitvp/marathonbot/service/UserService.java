@@ -83,4 +83,9 @@ public class UserService {
     public List<UserEntity> getUsers() {
         return userRepository.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public UserEntity getUser(Long telegramId) {
+        return userRepository.findByTelegramId(telegramId).orElse(null);
+    }
 }

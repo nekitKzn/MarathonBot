@@ -40,9 +40,15 @@ public class HistoryService {
     }
 
     private HistoryEntity createHistoryGoal(GoalEntity goal, Boolean completed) {
+        return createHistoryGoal(goal, completed, LocalDateTime.now());
+    }
+
+    private HistoryEntity createHistoryGoal(GoalEntity goal, Boolean completed, LocalDateTime time) {
         return HistoryEntity.builder()
                 .goal(goal)
                 .done(completed)
+                .createdAt(time)
+                .updatedAt(time)
                 .build();
     }
 
@@ -75,14 +81,14 @@ public class HistoryService {
                 goals.stream()
                         .filter(goal -> goal.getPosition() != 5)
                         .forEach(goal -> {
-                            var history = createHistoryGoal(goal, null);
+                            var history = createHistoryGoal(goal, null, endOfDay.minusMinutes(5));
                             historyRepository.save(history);
                         });
                 var goal5 = goals.stream()
                         .filter(goal -> goal.getPosition() == 5)
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("Goal 5 not found"));
-                var history = createHistoryGoal(goal5, false);
+                var history = createHistoryGoal(goal5, false, endOfDay.minusMinutes(5));
                 historyRepository.save(history);
                 letterSender.sendBadReport(user, goals);
             }
