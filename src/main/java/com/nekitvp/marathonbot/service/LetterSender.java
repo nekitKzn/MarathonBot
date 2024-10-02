@@ -23,13 +23,13 @@ import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 public class LetterSender {
 
     private final ApplicationEventPublisher publisher;
+    private final UserMarathonService userMarathonService;
 
     private static final Random random = new Random();
 
-    @Value("${bot.groupChatId}")
-    private Long groupChatId;
+    public void sendReport(Long telegramId, String name, List<Pair<String, Boolean>> report) {
 
-    public void sendReport(String name, List<Pair<String, Boolean>> report) {
+        List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(telegramId);
 
         StringBuilder reportBuilder = getShapka(name);
 
@@ -39,7 +39,7 @@ public class LetterSender {
         }
 
         String text = reportBuilder.toString();
-        publisher.publishEvent(new SendTelegramMessageEvent(this, text, groupChatId));
+        listTo.forEach(to -> publish(to, text));
     }
 
     private static StringBuilder getShapka(String name) {
@@ -47,12 +47,14 @@ public class LetterSender {
         var date = LocalDateTime.now();
         reportBuilder.append("Отчет: ").append(name).append("\n");
         reportBuilder.append("Дата: ").append(date.toLocalDate());
-        reportBuilder.append(" ").append(date.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("\n\n");
+        reportBuilder.append(" ").append(date.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")))
+                .append("\n\n");
         return reportBuilder;
     }
 
     private void publish(Long to, String template, Object... args) {
         String text = isEmpty(args) ? template : String.format(template, args);
+        log.info("Send message to {}: {}", to, text);
         publisher.publishEvent(new SendTelegramMessageEvent(this, text, to));
     }
 
@@ -87,6 +89,9 @@ public class LetterSender {
     }
 
     public void sendBadReport(UserEntity user, List<GoalEntity> goals) {
+
+        List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(user.getTelegramId());
+
         StringBuilder reportBuilder = getShapka(user.getTelegramFirstName());
 
         reportBuilder.append("Увы, братишка не справился! \uD83E\uDD72").append("\n\n");
@@ -102,7 +107,6 @@ public class LetterSender {
         reportBuilder.append("❌").append(" - ").append("Отчет");
 
         String text = reportBuilder.toString();
-        publisher.publishEvent(new SendTelegramMessageEvent(this, text, groupChatId));
-
+        listTo.forEach(id -> publish(id, text));
     }
 }

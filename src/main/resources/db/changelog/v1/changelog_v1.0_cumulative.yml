@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: /db/changelog/v1/2024-09-28-init-db.yml
+  - include:
+      file: /db/changelog/v1/2024-10-02-add-multi-marathon.yml

@@ -41,6 +41,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
 
+        if (Objects.nonNull(update.getMyChatMember())) {
+            log.info("Бот добавлен/исключен: {}, код чата: {}", update.getMyChatMember().getChat().getTitle(),
+                    update.getMyChatMember().getChat().getId());
+        }
+
         if (Objects.nonNull(update.getMyChatMember()) || badMessage(update)) {
             return;
         }

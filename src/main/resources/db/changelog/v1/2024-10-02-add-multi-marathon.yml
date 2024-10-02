@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01_add_multi_marathon
+      author: lobanov_nikita
+      changes:
+        - createTable:
+            tableName: marathon
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar
+              - column:
+                  name: description
+                  type: varchar
+              - column:
+                  name: group_id
+                  type: bigint
+        - createTable:
+            tableName: user_marathon
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: telegram_id
+                  type: bigint
+                  constraints:
+                    referencedTableName: users
+                    referencedColumnNames: telegram_id
+                    foreignKeyName: user_telegram_id_fk
+              - column:
+                  name: marathon_id
+                  type: bigint
+                  constraints:
+                    referencedTableName: marathon
+                    referencedColumnNames: id
+                    foreignKeyName: marathon_id_fk

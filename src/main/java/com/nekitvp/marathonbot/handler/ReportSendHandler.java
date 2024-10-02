@@ -35,7 +35,7 @@ public class ReportSendHandler implements Handler {
 
         var user = userService.getUser(telegramId);
         var name = user == null ? poll.getUser().getFirstName() : user.getTelegramFirstName();
-        letterSender.sendReport(name, report);
+        letterSender.sendReport(user.getTelegramId(), name, report);
 
         userService.updateUserState(telegramId, StateBot.START);
         return SendMessage.builder()
