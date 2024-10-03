@@ -40,20 +40,14 @@ public class HistoryService {
     }
 
     private HistoryEntity createHistoryGoal(GoalEntity goal, Boolean completed) {
-        return createHistoryGoal(goal, completed, LocalDateTime.now());
-    }
-
-    private HistoryEntity createHistoryGoal(GoalEntity goal, Boolean completed, LocalDateTime time) {
         return HistoryEntity.builder()
                 .goal(goal)
                 .done(completed)
-                .createdAt(time)
-                .updatedAt(time)
                 .build();
     }
 
     public boolean checkExistHistoryToday(Long telegramId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay().plusMinutes(1);
         LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
         return historyRepository.existsByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay);
     }
@@ -71,7 +65,7 @@ public class HistoryService {
     @Transactional
     public void createHistoryWhoFogot() {
         LocalDateTime endOfDay = LocalDateTime.now();
-        LocalDateTime startOfDay = endOfDay.minusDays(1);
+        LocalDateTime startOfDay = endOfDay.minusDays(1).plusMinutes(1);
         userService.getUsers().forEach(user -> {
             var exitReport = historyRepository.existsByTelegramIdAndCreatedAtBetween(user.getTelegramId(), startOfDay,
                     endOfDay);
@@ -81,14 +75,14 @@ public class HistoryService {
                 goals.stream()
                         .filter(goal -> goal.getPosition() != 5)
                         .forEach(goal -> {
-                            var history = createHistoryGoal(goal, null, endOfDay.minusMinutes(5));
+                            var history = createHistoryGoal(goal, null);
                             historyRepository.save(history);
                         });
                 var goal5 = goals.stream()
                         .filter(goal -> goal.getPosition() == 5)
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("Goal 5 not found"));
-                var history = createHistoryGoal(goal5, false, endOfDay.minusMinutes(5));
+                var history = createHistoryGoal(goal5, false);
                 historyRepository.save(history);
                 letterSender.sendBadReport(user, goals);
             }
