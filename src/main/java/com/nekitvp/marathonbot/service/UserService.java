@@ -3,6 +3,7 @@ package com.nekitvp.marathonbot.service;
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class UserService {
         userEntity.setState(state);
         userEntity.setCountChangeState(userEntity.getCountChangeState() + 1);
         userEntity.setCountChangeStateAll(userEntity.getCountChangeStateAll() + 1);
+        userEntity.setUpdatedAt(LocalDateTime.now());
         userRepository.save(userEntity);
         return userEntity.getState();
     }
@@ -58,6 +60,8 @@ public class UserService {
                 .telegramId(message.getFrom().getId())
                 .telegramUserName(message.getFrom().getUserName())
                 .telegramFirstName(message.getFrom().getFirstName())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .state(StateBot.START)
                 .build();
     }

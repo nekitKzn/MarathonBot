@@ -43,6 +43,8 @@ public class HistoryService {
         return HistoryEntity.builder()
                 .goal(goal)
                 .done(completed)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 

@@ -1,8 +1,8 @@
 CREATE TABLE "users"
 (
     "telegram_id"            BIGINT                         NOT NULL PRIMARY KEY,
-    "created_at"             TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    "updated_at"             TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    "created_at"             TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "updated_at"             TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "admin"                  BOOLEAN                        NOT NULL DEFAULT false,
     "telegram_user_name"     VARCHAR(255)                   NULL,
     "telegram_first_name"    VARCHAR(255)                   NULL,
@@ -23,8 +23,8 @@ CREATE TABLE "goal"
 CREATE TABLE "history"
 (
     "id"         SERIAL                         NOT NULL PRIMARY KEY,
-    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "goal_id"    BIGINT                         NOT NULL REFERENCES "goal" ("id"),
     "done"       BOOLEAN                        NULL
 );
