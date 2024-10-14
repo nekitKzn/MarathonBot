@@ -44,7 +44,6 @@ public class HistoryService {
                 .goal(goal)
                 .done(completed)
                 .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
     }
 

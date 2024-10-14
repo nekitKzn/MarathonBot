@@ -23,6 +23,15 @@ public class DailyTaskScheduler {
     }
 
     /**
+     * Метод будет запускаться каждый день в 23:50 вечера и отпрввлять напоминание тем, кто не отправил отчет
+     */
+    @Scheduled(cron = "0 50 23 * * ?", zone = "Europe/Moscow")
+    public void runTaskEveryDayAt23PM() {
+        log.info("Scheduler Notification started...");
+        historyService.sendWhoDidNotSetReport();
+    }
+
+    /**
      * Метод будет запускаться каждый день в 00:00 и отправляет отчеты за тех, кто это не сделал
      */
     @Scheduled(cron = "0 0 0 * * ?", zone = "Europe/Moscow")

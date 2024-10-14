@@ -2,6 +2,7 @@ package com.nekitvp.marathonbot.model;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
@@ -14,7 +15,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @DynamicUpdate
 @Entity
 @Table(name = "users", schema = "public")
-public class UserEntity extends AbstractEntity {
+public class UserEntity {
 
     @Id
     private Long telegramId;
@@ -22,6 +23,11 @@ public class UserEntity extends AbstractEntity {
     private String telegramUserName;
 
     private String telegramFirstName;
+
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
     private StateBot state;
