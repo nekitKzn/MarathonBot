@@ -3,6 +3,7 @@ package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.model.HistoryEntity;
+import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.HistoryRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static java.time.LocalDateTime.now;
 
 @Service
 @RequiredArgsConstructor
@@ -33,60 +36,89 @@ public class HistoryService {
         goals.forEach(goal -> {
             var completed = optionIds.contains(goal.getPosition() - 1);
             list.add(Pair.of(goal.getName(), completed));
-            var history = createHistoryGoal(goal, completed);
+            var history = createHistoryGoal(goal, completed, now());
             historyRepository.save(history);
         });
         return list;
     }
 
-    private HistoryEntity createHistoryGoal(GoalEntity goal, Boolean completed) {
+    @Transactional
+    public List<Pair<String, Boolean>> updateHistory(Long telegramId, List<Integer> optionIds) {
+
+        List<Pair<String, Boolean>> list = new ArrayList<>();
+
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay().minusDays(1);
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX).minusDays(1);
+        var histories = historyRepository.findByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay);
+
+        histories.forEach(history -> {
+            var goal = history.getGoal();
+            var completed = optionIds.contains(goal.getPosition() - 1);
+            list.add(Pair.of(goal.getName(), completed));
+            history.setDone(completed);
+        });
+        historyRepository.saveAll(histories);
+        return list;
+    }
+
+    private HistoryEntity createHistoryGoal(GoalEntity goal, Boolean completed, LocalDateTime time) {
         return HistoryEntity.builder()
                 .goal(goal)
                 .done(completed)
-                .createdAt(LocalDateTime.now())
+                .createdAt(time)
                 .build();
     }
 
     public boolean checkExistHistoryToday(Long telegramId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay().plusMinutes(1);
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
         return historyRepository.existsByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay);
     }
 
+    public boolean checkExistNullHistoryYesterday(Long telegramId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay().minusDays(1);
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX).minusDays(1);
+        return historyRepository.findByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay)
+                .stream().anyMatch(history -> history.getDone() == null);
+    }
+
     @Transactional(readOnly = true)
     public void sendWhoDidNotSetReport() {
-        userService.getUsers().forEach(user -> {
-            var needNotification = !checkExistHistoryToday(user.getTelegramId());
-            if (needNotification) {
-                letterSender.sendWhoDidNotSetReport(user);
-            }
-        });
+        userService.getPlayingUsers()
+                .forEach(user -> {
+                    var needNotification = !checkExistHistoryToday(user.getTelegramId());
+                    if (needNotification) {
+                        letterSender.sendWhoDidNotSetReport(user);
+                    }
+                });
     }
 
     @Transactional
     public void createHistoryWhoFogot() {
-        LocalDateTime endOfDay = LocalDateTime.now();
-        LocalDateTime startOfDay = endOfDay.minusDays(1).plusMinutes(1);
-        userService.getUsers().forEach(user -> {
-            var exitReport = historyRepository.existsByTelegramIdAndCreatedAtBetween(user.getTelegramId(), startOfDay,
-                    endOfDay);
+        LocalDateTime endOfDay = now();
+        LocalDateTime startOfDay = endOfDay.minusDays(1);
+        userService.getPlayingUsers()
+                .forEach(user -> {
+                    var exitReport = historyRepository.existsByTelegramIdAndCreatedAtBetween(user.getTelegramId(),
+                            startOfDay,
+                            endOfDay);
 
-            if (!exitReport) {
-                var goals = goalService.getGoalByUser(user.getTelegramId());
-                goals.stream()
-                        .filter(goal -> goal.getPosition() != 5)
-                        .forEach(goal -> {
-                            var history = createHistoryGoal(goal, null);
-                            historyRepository.save(history);
-                        });
-                var goal5 = goals.stream()
-                        .filter(goal -> goal.getPosition() == 5)
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("Goal 5 not found"));
-                var history = createHistoryGoal(goal5, false);
-                historyRepository.save(history);
-                letterSender.sendBadReport(user, goals);
-            }
-        });
+                    if (!exitReport) {
+                        var goals = goalService.getGoalByUser(user.getTelegramId());
+                        goals.stream()
+                                .filter(goal -> goal.getPosition() != 5)
+                                .forEach(goal -> {
+                                    var history = createHistoryGoal(goal, null, now().minusHours(12));
+                                    historyRepository.save(history);
+                                });
+                        var goal5 = goals.stream()
+                                .filter(goal -> goal.getPosition() == 5)
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("Goal 5 not found"));
+                        var history = createHistoryGoal(goal5, false, now().minusHours(12));
+                        historyRepository.save(history);
+                        letterSender.sendBadReport(user, goals);
+                    }
+                });
     }
 }

@@ -4,7 +4,6 @@ import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.UserRepository;
 import java.time.LocalDateTime;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,17 +78,19 @@ public class UserService {
 
     @Transactional
     public void resetCount() {
-        List<UserEntity> users = userRepository.findAll().stream().peek(user -> user.setCountChangeState(0L)).toList();
+        List<UserEntity> users = userRepository.findAll().stream()
+                .peek(user -> user.setCountChangeState(0L)).toList();
         userRepository.saveAll(users);
     }
 
     @Transactional(readOnly = true)
-    public List<UserEntity> getUsers() {
-        return userRepository.findAll();
+    public List<UserEntity> getPlayingUsers() {
+        return userRepository.findAll().stream().filter(UserEntity::isPlaying).toList();
     }
 
     @Transactional(readOnly = true)
     public UserEntity getUser(Long telegramId) {
-        return userRepository.findByTelegramId(telegramId).orElse(null);
+        return userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new RuntimeException("Акканут не найден: " + telegramId));
     }
 }

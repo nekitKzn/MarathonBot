@@ -13,28 +13,26 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 @RequiredArgsConstructor
-public class ReportSendHandler implements Handler {
+public class ReportSendYesterdayHandler implements Handler {
 
     private final UserService userService;
     private final HistoryService historyService;
     private  final LetterSender letterSender;
 
-
     @Override
     public StateBot getCurrentState() {
-        return StateBot.REPORT_SEND;
+        return StateBot.REPORT_SEND_YESTERDAY;
     }
 
     @Override
     public Object handle(Update update) {
-
         var poll = update.getPollAnswer();
         var telegramId = poll.getUser().getId();
 
-        List<Pair<String, Boolean>> report = historyService.createHistoryGoal(telegramId, poll.getOptionIds());
+        List<Pair<String, Boolean>> report = historyService.updateHistory(telegramId, poll.getOptionIds());
 
         var user = userService.getUser(telegramId);
-        letterSender.sendReport(user.getTelegramId(), user.getTelegramFirstName(), report);
+        letterSender.sendYesterdayReport(user.getTelegramId(), user.getTelegramFirstName(), report);
 
         userService.updateUserState(telegramId, StateBot.START);
         return SendMessage.builder()
@@ -42,6 +40,5 @@ public class ReportSendHandler implements Handler {
                 .text(getCurrentState().getMessage())
                 .replyMarkup(getKeyboardDefault(StateBot.START))
                 .build();
-
     }
 }

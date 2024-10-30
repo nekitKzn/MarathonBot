@@ -1,6 +1,7 @@
 package com.nekitvp.marathonbot.handler;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
+import com.nekitvp.marathonbot.service.HistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -15,6 +16,8 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 @Component
 @RequiredArgsConstructor
 public class StartHandler implements Handler {
+
+    private final HistoryService historyService;
 
     @Override
     public StateBot getCurrentState() {
@@ -33,6 +36,17 @@ public class StartHandler implements Handler {
                                 List.of(createButtonByState(StateBot.REPORT))
                         )
                 ).build();
+
+        if (historyService.checkExistNullHistoryYesterday(message.getChat().getId())) {
+            replyKeyboard = InlineKeyboardMarkup.builder()
+                    .keyboard(List.of(
+                                    List.of(createButtonByState(StateBot.ABOUT_BOT),
+                                            createButtonByState(StateBot.RULES)),
+                                    List.of(createButtonByState(StateBot.REPORT)),
+                                    List.of(createButtonByState(StateBot.REPORT_YESTERDAY))
+                            )
+                    ).build();
+        }
 
         return getDefaultMessage(message, replyKeyboard, message.getChat().getFirstName());
     }

@@ -20,7 +20,6 @@ import java.util.Objects;
 public class UpdateHandler {
 
     private static final String ADMIN_COMMAND = "/admin";
-    private static final String TEACHER_COMMAND = "/teacher";
 
     private final UserService userService;
     private final FunctionService functionService;
@@ -34,8 +33,6 @@ public class UpdateHandler {
     }
 
     public Object handleMessage(Update update) {
-
-
 
         if (isMessageWithText(update)) { // пришел текст
 

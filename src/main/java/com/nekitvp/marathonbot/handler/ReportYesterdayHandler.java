@@ -15,31 +15,25 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 @RequiredArgsConstructor
-public class ReportHandler implements Handler {
+public class ReportYesterdayHandler implements Handler {
 
     private final GoalService goalService;
     private final UserService userService;
-    private final HistoryService historyService;
 
     @Override
     public StateBot getCurrentState() {
-        return StateBot.REPORT;
-    }
-
-    @Override
-    public StateBot getNextState() {
-        return StateBot.REPORT_SEND;
+        return StateBot.REPORT_YESTERDAY;
     }
 
     private static final String TEXT_IF_EMPTY = """
-            К сожалению вы еще не на дистанции))
+            К сожалению вы не на дистанции))
             
             Обратитесь к администратору: @nekit_vp""";
 
-    private static final String TEXT_IF_ALREADY_SEND = """
-            Вы уже отправили отчет за сегодня (%s)
-            
-            Жду тебя завтра! ❤️""";
+    @Override
+    public StateBot getNextState() {
+        return StateBot.REPORT_SEND_YESTERDAY;
+    }
 
     @Override
     public Object handle(Update update) {
@@ -58,22 +52,13 @@ public class ReportHandler implements Handler {
                     .build();
         }
 
-        // если отчет уже отправлен
-        if (historyService.checkExistHistoryToday(message.getChatId())) {
-            userService.updateUserState(message.getChatId(), StateBot.START);
-            var day = LocalDateTime.now().toLocalDate().toString();
-            return SendMessage.builder()
-                    .chatId(message.getChatId())
-                    .text(String.format(TEXT_IF_ALREADY_SEND, day))
-                    .replyMarkup(getKeyboardDefault(StateBot.START))
-                    .build();
-        }
-        
-        List<String> options = listGoal.stream().map(GoalEntity::getName).toList();
+        List<String> options = listGoal.stream()
+                .filter(goal -> goal.getPosition() != 5)
+                .map(GoalEntity::getName).toList();
 
         SendPoll poll = new SendPoll();
         poll.setChatId(message.getChatId());
-        poll.setQuestion("Выберите те цели которые вы выполнили: ");
+        poll.setQuestion("Выберите те цели которые вы выполнили вчера: ");
         poll.setOptions(options);
         poll.setAllowMultipleAnswers(true);
         poll.setIsAnonymous(false);

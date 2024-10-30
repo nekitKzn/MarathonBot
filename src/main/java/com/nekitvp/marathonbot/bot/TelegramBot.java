@@ -1,5 +1,6 @@
 package com.nekitvp.marathonbot.bot;
 
+import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.UpdateHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import static com.nekitvp.marathonbot.log.Constant.ERROR_WITH_SENDING_MESSAGE;
 public class TelegramBot extends TelegramLongPollingBot {
 
     private final UpdateHandler updateHandler;
+    private final MarathonService marathonService;
     @Value("${bot.token}")
     private String token;
     @Value("${bot.name}")
@@ -42,11 +44,19 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         if (Objects.nonNull(update.getMyChatMember())) {
-            log.info("Бот добавлен/исключен: {}, код чата: {}", update.getMyChatMember().getChat().getTitle(),
-                    update.getMyChatMember().getChat().getId());
+            String name = update.getMyChatMember().getChat().getTitle();
+            Long chatId = update.getMyChatMember().getChat().getId();
+            if (update.getMyChatMember().getNewChatMember().getStatus().equalsIgnoreCase("left")) {
+                log.info("Бот исключен из чата - {} код чата: {}", name, chatId);
+                marathonService.leftMarathon(chatId);
+            } else {
+                log.info("Бот добавлен в чат {}, код чата: {}", name, chatId);
+                marathonService.addMarathon(name, chatId);
+            }
+            return;
         }
 
-        if (Objects.nonNull(update.getMyChatMember()) || badMessage(update)) {
+        if (badMessage(update)) {
             return;
         }
 
