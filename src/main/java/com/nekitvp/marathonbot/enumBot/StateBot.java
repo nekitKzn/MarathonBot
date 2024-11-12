@@ -18,9 +18,6 @@ public enum StateBot {
             
             Успехов!
             
-            "Не бойся, ибо Я с тобою; не ужасайся, ибо Я Бог твой; 
-            Я укреплю тебя, Я помогу тебе, Я поддержу тебя праведною десницею Моею". @Библия
-            
             """,
             "Вернуться на главную ↩️"),
 
@@ -80,6 +77,12 @@ public enum StateBot {
 
     ADMIN_MAIN("\uD83E\uDE84\uD83E\uDE84\uD83E\uDE84Панель администратора!" +
             "\uD83E\uDE84\uD83E\uDE84\uD83E\uDE84", "⬅️"),
+
+    LETTER_TO_MARATHON("Выбери в какой марафон отправить сообщение!",
+            "Отправить сообщение в Марафон"),
+
+    LETTER_TO_MARATHON_SELECT("Напиши сообщение:", null),
+    LETTER_TO_MARATHON_SANDED("Сообщение отравлено", null),
 
 
     ADMIN_LIST_USERS_ALL_COUNT("""

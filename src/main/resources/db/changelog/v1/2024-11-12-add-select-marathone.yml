@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01_add_select_marathon
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: marathon
+            columns:
+              - column:
+                  name: select_for_send_message
+                  type: boolean
+                  defaultValueBoolean: false

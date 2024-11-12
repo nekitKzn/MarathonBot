@@ -37,6 +37,10 @@ public class LetterSender {
         publish(to, template, null, args);
     }
 
+    public void publishText(Long to, String template) {
+        publish(to, template);
+    }
+
     public void sendReport(Long telegramId, String name, List<Pair<String, Boolean>> report) {
 
         List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(telegramId);

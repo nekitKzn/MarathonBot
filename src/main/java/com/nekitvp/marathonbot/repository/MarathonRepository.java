@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface MarathonRepository extends JpaRepository<MarathonEntity, Long> {
 
     Optional<MarathonEntity> findByGroupId(Long groupId);
+
+    Optional<MarathonEntity> findBySelectTrue();
 }

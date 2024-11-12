@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import java.util.List;
 
 import static com.nekitvp.marathonbot.enumBot.StateBot.ADMIN_LIST_USERS_UPDATE_COUNT;
+import static com.nekitvp.marathonbot.enumBot.StateBot.LETTER_TO_MARATHON;
 import static com.nekitvp.marathonbot.enumBot.StateBot.START;
 import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
@@ -31,7 +32,9 @@ public class AdminMainHandler implements Handler {
                         List.of(
                                 List.of(createButtonByState(StateBot.ADMIN_LIST_USERS_ALL_COUNT),
                                         createButtonByState(ADMIN_LIST_USERS_UPDATE_COUNT)),
-                                List.of(createButtonByState(START))
+                                List.of(createButtonByState(START)),
+                                List.of(createButtonByState(LETTER_TO_MARATHON)
+                                )
                         ))
                 .build();
 

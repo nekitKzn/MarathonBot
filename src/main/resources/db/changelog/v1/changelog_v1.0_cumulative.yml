@@ -7,3 +7,5 @@ databaseChangeLog:
       file: /db/changelog/v1/2024-10-04-delete-update-at.yml
   - include:
       file: /db/changelog/v1/2024-10-23-add-status-marathon.yml
+  - include:
+      file: /db/changelog/v1/2024-11-12-add-select-marathone.yml
