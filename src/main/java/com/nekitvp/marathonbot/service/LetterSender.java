@@ -15,7 +15,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 @Service
@@ -106,6 +108,9 @@ public class LetterSender {
         reportBuilder.append("❌").append(" - ").append("Отчет");
 
         String text = reportBuilder.toString();
+
+        publish(user.getTelegramId(), "Эхх...\uD83E\uDD72\uD83E\uDD72, я в тебя верил))", StateBot.REPORT_YESTERDAY);
+
         listTo.forEach(id -> publish(id, text));
     }
 }
