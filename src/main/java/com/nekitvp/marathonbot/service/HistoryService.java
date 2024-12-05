@@ -34,10 +34,17 @@ public class HistoryService {
         List<Pair<String, Boolean>> list = new ArrayList<>();
 
         goals.forEach(goal -> {
-            var completed = optionIds.contains(goal.getPosition() - 1);
-            list.add(Pair.of(goal.getName(), completed));
-            var history = createHistoryGoal(goal, completed, now());
-            historyRepository.save(history);
+            if (goal.getPosition() == 5) {
+                list.add(Pair.of(goal.getName(), true));
+                var history = createHistoryGoal(goal, true, now());
+                historyRepository.save(history);
+            } else {
+                var completed = optionIds.contains(goal.getPosition() - 1);
+                list.add(Pair.of(goal.getName(), completed));
+                var history = createHistoryGoal(goal, completed, now());
+                historyRepository.save(history);
+            }
+
         });
         return list;
     }

@@ -69,7 +69,9 @@ public class ReportHandler implements Handler {
                     .build();
         }
         
-        List<String> options = listGoal.stream().map(GoalEntity::getName).toList();
+        List<String> options = listGoal.stream()
+                .filter(goal -> goal.getPosition() != 5)
+                .map(GoalEntity::getName).toList();
 
         SendPoll poll = new SendPoll();
         poll.setChatId(message.getChatId());
