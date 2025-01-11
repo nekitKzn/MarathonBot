@@ -3,6 +3,7 @@ package com.nekitvp.marathonbot.service;
 import com.nekitvp.marathonbot.model.MarathonEntity;
 import com.nekitvp.marathonbot.repository.MarathonRepository;
 import jakarta.ws.rs.NotFoundException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,13 @@ public class MarathonService {
         return marathonRepository.findAll()
                 .stream().filter(MarathonEntity::getIsMember)
                 .collect(Collectors.toMap(MarathonEntity::getId, MarathonEntity::getName));
+    }
+
+    @Transactional(readOnly = true)
+    public List<MarathonEntity> getAllMarathonesForMotivate() {
+        return marathonRepository.findAll().stream()
+                .filter(MarathonEntity::getMotivationSender)
+                .toList();
     }
 
     public void selectMarathon(Long id) {

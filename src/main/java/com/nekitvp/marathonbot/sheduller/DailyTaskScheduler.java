@@ -1,6 +1,7 @@
 package com.nekitvp.marathonbot.sheduller;
 
 import com.nekitvp.marathonbot.service.HistoryService;
+import com.nekitvp.marathonbot.service.MotivationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class DailyTaskScheduler {
 
     private final HistoryService historyService;
+    private final MotivationService motivationService;
 
     /**
      * Метод будет запускаться каждый день в 10 вечера и отпрввлять напоминание тем, кто не отправил отчет
@@ -38,5 +40,32 @@ public class DailyTaskScheduler {
     public void runTaskEveryDayAt00() {
         log.info("Scheduler Reports started...");
         historyService.createHistoryWhoFogot();
+    }
+
+    /**
+     * Метод будет запускаться в 9 утра для мотивации
+     */
+    @Scheduled(cron = "0 0 9 * * ?", zone = "Europe/Moscow")
+    public void motivation9() {
+        log.info("Scheduler Motivation started...");
+        motivationService.sendRandomMotivation();
+    }
+
+    /**
+     * Метод будет запускаться в 14 дня для мотивации
+     */
+    @Scheduled(cron = "0 0 14 * * ?", zone = "Europe/Moscow")
+    public void motivation14() {
+        log.info("Scheduler Motivation started...");
+        motivationService.sendRandomMotivation();
+    }
+
+    /**
+     * Метод будет запускаться в 9 вечера для мотивации
+     */
+    @Scheduled(cron = "0 0 21 * * ?", zone = "Europe/Moscow")
+    public void motivation21() {
+        log.info("Scheduler Motivation started...");
+        motivationService.sendRandomMotivation();
     }
 }

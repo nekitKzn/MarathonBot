@@ -3,6 +3,7 @@ package com.nekitvp.marathonbot.service;
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.event.SendTelegramMessageEvent;
 import com.nekitvp.marathonbot.model.GoalEntity;
+import com.nekitvp.marathonbot.model.MotivationEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -112,5 +113,9 @@ public class LetterSender {
         publish(user.getTelegramId(), "Эхх...\uD83E\uDD72\uD83E\uDD72, я в тебя верил))", StateBot.REPORT_YESTERDAY);
 
         listTo.forEach(id -> publish(id, text));
+    }
+
+    public void sendMotivation(MotivationEntity motivation) {
+        publishText(motivation.getMarathon().getGroupId(), motivation.getText());
     }
 }
