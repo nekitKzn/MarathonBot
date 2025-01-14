@@ -2,6 +2,7 @@ package com.nekitvp.marathonbot.handler;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.service.HistoryService;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -9,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.util.List;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
@@ -29,24 +31,22 @@ public class StartHandler implements Handler {
 
         var message = getMessage(update);
 
-        var replyKeyboard = InlineKeyboardMarkup.builder()
-                .keyboard(List.of(
-                                List.of(createButtonByState(StateBot.ABOUT_BOT),
-                                        createButtonByState(StateBot.RULES)),
-                                List.of(createButtonByState(StateBot.REPORT))
-                        )
-                ).build();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        keyboard.add(List.of(createButtonByState(StateBot.ABOUT_BOT),
+                createButtonByState(StateBot.RULES)));
+
+        if (historyService.checkExistHistoryToday(message.getChat().getId())) {
+            keyboard.add(List.of(createButtonByState(StateBot.DELETE_REPORT)));
+        } else {
+            keyboard.add(List.of(createButtonByState(StateBot.REPORT)));
+        }
 
         if (historyService.checkExistNullHistoryYesterday(message.getChat().getId())) {
-            replyKeyboard = InlineKeyboardMarkup.builder()
-                    .keyboard(List.of(
-                                    List.of(createButtonByState(StateBot.ABOUT_BOT),
-                                            createButtonByState(StateBot.RULES)),
-                                    List.of(createButtonByState(StateBot.REPORT)),
-                                    List.of(createButtonByState(StateBot.REPORT_YESTERDAY))
-                            )
-                    ).build();
+            keyboard.add(List.of(createButtonByState(StateBot.REPORT_YESTERDAY)));
         }
+
+        var replyKeyboard = InlineKeyboardMarkup.builder().keyboard(keyboard).build();
 
         return getDefaultMessage(message, replyKeyboard, message.getChat().getFirstName());
     }

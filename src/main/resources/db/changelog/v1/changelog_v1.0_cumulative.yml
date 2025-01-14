@@ -11,3 +11,5 @@ databaseChangeLog:
       file: /db/changelog/v1/2024-11-12-add-select-marathone.yml
   - include:
       file: /db/changelog/v1/2025-01-11-add-mativation-table.yml
+  - include:
+      file: /db/changelog/v1/2025-01-13-add-marathone-date.yml

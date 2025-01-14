@@ -32,14 +32,18 @@ public class ReportHandler implements Handler {
     }
 
     private static final String TEXT_IF_EMPTY = """
-            К сожалению вы еще не на дистанции))
-            
-            Обратитесь к администратору: @nekit_vp""";
+        Ой-ой! 😅 Кажется, ты ещё не на дистанции...  
+        
+        Не беда! Напиши нашему супер-администратору: @nekit_vp, и всё поправим! 💬✌️
+        """;
+
 
     private static final String TEXT_IF_ALREADY_SEND = """
-            Вы уже отправили отчет за сегодня (%s)
-            
-            Жду тебя завтра! ❤️""";
+        Эй! Ты уже отправил отчёт за сегодня (%s). 📝👍  
+        
+        Круто сработано! 💪 Отдыхай и жду тебя завтра для новых подвигов! ❤️🔥  
+        """;
+
 
     @Override
     public Object handle(Update update) {

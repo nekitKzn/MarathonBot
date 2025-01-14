@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01_add_marathone_date
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: marathon
+            columns:
+              - column:
+                  name: date_start
+                  type: timestamp
+              - column:
+                  name: date_end
+                  type: timestamp
+        - renameColumn:
+            tableName: marathon
+            oldColumnName: motivation_sender
+            newColumnName: is_work

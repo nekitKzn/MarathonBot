@@ -1,6 +1,7 @@
 package com.nekitvp.marathonbot.sheduller;
 
 import com.nekitvp.marathonbot.service.HistoryService;
+import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.MotivationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class DailyTaskScheduler {
 
     private final HistoryService historyService;
+    private final MarathonService marathonService;
     private final MotivationService motivationService;
 
     /**
@@ -67,5 +69,14 @@ public class DailyTaskScheduler {
     public void motivation21() {
         log.info("Scheduler Motivation started...");
         motivationService.sendRandomMotivation();
+    }
+
+    /**
+     * Метод будет запускаться в 6 утра как статистика
+     */
+    @Scheduled(cron = "0 0 6 * * ?", zone = "Europe/Moscow")
+    public void resultStatistics() {
+        log.info("Scheduler Statistics started...");
+        marathonService.sendStatistics();
     }
 }

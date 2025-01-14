@@ -1,12 +1,15 @@
 package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.model.MarathonEntity;
+import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.MarathonRepository;
 import jakarta.ws.rs.NotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class MarathonService {
 
     private final MarathonRepository marathonRepository;
+    private final UserMarathonService userMarathonService;
+    private final HistoryService historyService;
+    private final LetterSender letterSender;
 
     @Transactional
     public void addMarathon(String name, Long groupId) {
@@ -52,8 +58,12 @@ public class MarathonService {
 
     @Transactional(readOnly = true)
     public List<MarathonEntity> getAllMarathonesForMotivate() {
+        return getPlayingMarathone();
+    }
+
+    private List<MarathonEntity> getPlayingMarathone() {
         return marathonRepository.findAll().stream()
-                .filter(MarathonEntity::getMotivationSender)
+                .filter(MarathonEntity::getIsWork)
                 .toList();
     }
 
@@ -70,5 +80,23 @@ public class MarathonService {
         entity.setSelect(false);
         marathonRepository.save(entity);
         return entity.getGroupId();
+    }
+
+    @Transactional
+    public void sendStatistics() {
+        var listMarathons = getPlayingMarathone();
+        listMarathons.stream()
+                .filter(marathon -> marathon.getDateStart() != null)
+                .filter(marathon -> marathon.getDateEnd() != null)
+                .filter(marathon -> LocalDateTime.now().isBefore(marathon.getDateEnd()))
+                .forEach(marathon -> {
+                    var users = userMarathonService.getUsersByMarathonId(marathon.getId());
+                    Map<String, Pair<Long, Long>> mapUsers = users.stream()
+                            .collect(Collectors.toMap(
+                                    UserEntity::getTelegramFirstName,
+                                    user -> historyService.getCountFailByUserInMarathone(user, marathon)
+                            ));
+                    letterSender.sendStatistics(marathon, mapUsers);
+                });
     }
 }

@@ -3,6 +3,7 @@ package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.model.HistoryEntity;
+import com.nekitvp.marathonbot.model.MarathonEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.HistoryRepository;
 import java.time.LocalDate;
@@ -127,5 +128,31 @@ public class HistoryService {
                         letterSender.sendBadReport(user, goals);
                     }
                 });
+    }
+
+    public Pair<Long, Long> getCountFailByUserInMarathone(UserEntity user, MarathonEntity marathone) {
+        var history = historyRepository.findByTelegramIdAndCreatedAtBetween(
+                user.getTelegramId(),
+                marathone.getDateStart(),
+                marathone.getDateEnd());
+
+        var countFail = history.stream().filter(h -> h.getDone() != null && !h.getDone()).count();
+        var countNull = history.stream().filter(h -> h.getDone() == null).count();
+        return Pair.of(countFail, countFail + countNull);
+    }
+
+    public void deleteReport(Long chatId) {
+
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        var histories = historyRepository.findByTelegramIdAndCreatedAtBetween(chatId, startOfDay, endOfDay);
+
+        if (!histories.isEmpty()) {
+            var user = userService.getUser(chatId);
+            letterSender.publishInMarathonsByUserId(chatId, String.format("‼\uFE0F Отчет марафонца '%s' анулирован ‼\uFE0F",
+                    user.getTelegramFirstName()));
+        }
+        historyRepository.deleteAll(histories);
+
     }
 }

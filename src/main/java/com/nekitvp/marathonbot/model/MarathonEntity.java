@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,11 +41,17 @@ public class MarathonEntity {
     @Column(name = "is_member")
     private Boolean isMember;
 
+    @Column(name = "date_start")
+    private LocalDateTime dateStart;
+
+    @Column(name = "date_end")
+    private LocalDateTime dateEnd;
+
     @Builder.Default
     @Column(name = "select_for_send_message")
     private Boolean select = false;
 
     @Builder.Default
-    @Column(name = "motivation_sender")
-    private Boolean motivationSender = false;
+    @Column(name = "is_work")
+    private Boolean isWork = false;
 }

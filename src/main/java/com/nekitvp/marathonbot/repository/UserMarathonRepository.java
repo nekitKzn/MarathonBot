@@ -10,4 +10,5 @@ public interface UserMarathonRepository extends JpaRepository<UserMarathonEntity
 
     List<UserMarathonEntity> findByTelegramId(Long telegramId);
 
+    List<UserMarathonEntity> findByMarathonId(Long marathonId);
 }

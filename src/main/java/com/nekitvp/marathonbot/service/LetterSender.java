@@ -3,12 +3,15 @@ package com.nekitvp.marathonbot.service;
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.event.SendTelegramMessageEvent;
 import com.nekitvp.marathonbot.model.GoalEntity;
+import com.nekitvp.marathonbot.model.MarathonEntity;
 import com.nekitvp.marathonbot.model.MotivationEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +45,11 @@ public class LetterSender {
 
     public void publishText(Long to, String template) {
         publish(to, template);
+    }
+
+    public void publishInMarathonsByUserId(Long telegramId, String text) {
+        List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(telegramId);
+        listTo.forEach(to -> publish(to, text));
     }
 
     public void sendReport(Long telegramId, String name, List<Pair<String, Boolean>> report) {
@@ -117,5 +125,50 @@ public class LetterSender {
 
     public void sendMotivation(MotivationEntity motivation) {
         publishText(motivation.getMarathon().getGroupId(), motivation.getText());
+    }
+
+    public void sendStatistics(MarathonEntity marathon, Map<String, Pair<Long, Long>> mapUsers) {
+
+        StringBuilder report = new StringBuilder();
+        report.append("Доброе утро, участники марафона! ☀️\n\n");
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = marathon.getDateStart();
+        LocalDateTime end = marathon.getDateEnd();
+
+        long totalDays = start.until(end, ChronoUnit.DAYS) + 1;
+        long currentDay = start.until(now, ChronoUnit.DAYS) + 1;
+        long daysLeft = totalDays - currentDay;
+
+        report.append(String.format("Сегодня %d-й день марафона. Осталось %d дней. ⏳\n\n", currentDay, daysLeft));
+
+        report.append("Рейтинг участников по количеству штрафов:\n");
+        report.append("---------------\n");
+
+        List<Map.Entry<String, Pair<Long, Long>>> sortedUsers = mapUsers.entrySet()
+                .stream()
+                .sorted((a, b) -> {
+                    Pair<Long, Long> pairA = a.getValue();
+                    Pair<Long, Long> pairB = b.getValue();
+                    return Long.compare(pairA.getFirst(), pairB.getFirst());
+                })
+                .toList();
+
+        for (Map.Entry<String, Pair<Long, Long>> entry : sortedUsers) {
+            String name = entry.getKey();
+            Long crosses = entry.getValue().getFirst();
+            Long maxCrosses = entry.getValue().getSecond();
+
+            if (Objects.equals(crosses, maxCrosses)) {
+                report.append(String.format("%d : %s \n", crosses, name));
+            } else {
+                report.append(String.format("%d (%d): %s \n", crosses, maxCrosses, name));
+            }
+        }
+
+        report.append("---------------\n");
+        report.append("Продуктивного дня! \uD83D\uDCAA \n");
+
+        publishText(marathon.getGroupId(), report.toString());
     }
 }
