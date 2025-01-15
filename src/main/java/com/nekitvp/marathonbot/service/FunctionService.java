@@ -8,8 +8,13 @@ import org.springframework.stereotype.Service;
 public class FunctionService {
 
     private final UserService userService;
+    private final MarathonService marathonService;
 
     public void resetCountToZero() {
         userService.resetCount();
+    }
+
+    public void sendResultReport() {
+        marathonService.sendStatistics();
     }
 }

@@ -130,7 +130,7 @@ public class LetterSender {
     public void sendStatistics(MarathonEntity marathon, Map<String, Pair<Long, Long>> mapUsers) {
 
         StringBuilder report = new StringBuilder();
-        report.append("Доброе утро, участники марафона! ☀️\n\n");
+        report.append("Привет, участники марафона! ☀️\n\n");
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start = marathon.getDateStart();
