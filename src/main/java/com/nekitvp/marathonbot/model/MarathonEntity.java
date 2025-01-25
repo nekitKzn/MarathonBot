@@ -54,4 +54,7 @@ public class MarathonEntity {
     @Builder.Default
     @Column(name = "is_work")
     private Boolean isWork = false;
+
+    @Column(name = "free_fail_count")
+    private Integer freeFailCount;
 }

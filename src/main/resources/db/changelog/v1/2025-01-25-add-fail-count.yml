@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01_add_fail_count
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: marathon
+            columns:
+              - column:
+                  name: free_fail_count
+                  type: integer

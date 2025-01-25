@@ -140,9 +140,9 @@ public class LetterSender {
         long currentDay = start.until(now, ChronoUnit.DAYS) + 1;
         long daysLeft = totalDays - currentDay;
 
-        report.append(String.format("Сегодня %d-й день марафона. Осталось %d дней. ⏳\n\n", currentDay, daysLeft));
+        report.append(String.format("Сегодня %d-й день марафона. \uD83C\uDFC3\u200D♂\uFE0F\uD83D\uDCC5 Осталось %d дней.⏳\uD83D\uDD25\n\n", currentDay, daysLeft));
 
-        report.append("Рейтинг участников по количеству штрафов:\n");
+        report.append("\uD83C\uDFC6 Рейтинг участников по количеству штрафов:\n");
         report.append("---------------\n");
 
         List<Map.Entry<String, Pair<Long, Long>>> sortedUsers = mapUsers.entrySet()
@@ -154,6 +154,8 @@ public class LetterSender {
                 })
                 .toList();
 
+        long cash = 0;
+        long cashMax = 0;
         for (Map.Entry<String, Pair<Long, Long>> entry : sortedUsers) {
             String name = entry.getKey();
             Long crosses = entry.getValue().getFirst();
@@ -164,10 +166,20 @@ public class LetterSender {
             } else {
                 report.append(String.format("%d (%d): %s \n", crosses, maxCrosses, name));
             }
+
+            if (crosses > marathon.getFreeFailCount()) {
+                cash += (crosses - marathon.getFreeFailCount()) * 100;
+            }
+            if (maxCrosses > marathon.getFreeFailCount()) {
+                cashMax += (maxCrosses - marathon.getFreeFailCount()) * 100;
+            }
         }
 
         report.append("---------------\n");
-        report.append("Продуктивного дня! \uD83D\uDCAA \n");
+        report.append(String.format("✅Допустимо максимум %d бесплатных штрафов. \n\n", marathon.getFreeFailCount()));
+        String cashString = cash == cashMax ? String.valueOf(cash) : String.format("%d (%d)", cash, cashMax);
+        report.append(String.format("\uD83D\uDCB0 В кассе %s рублей. \uD83D\uDCB5 \n\n", cashString));
+        report.append("Продуктивного дня! \uD83D\uDCAA⚡\uD83C\uDF08 \n");
 
         publishText(marathon.getGroupId(), report.toString());
     }
