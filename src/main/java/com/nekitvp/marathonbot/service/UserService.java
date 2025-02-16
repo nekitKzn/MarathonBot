@@ -4,6 +4,7 @@ import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,13 +85,33 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserEntity> getPlayingUsers() {
-        return userRepository.findAll().stream().filter(UserEntity::isPlaying).toList();
+    public List<UserEntity> getUsersWhoHasActiveMarathone() {
+        return userRepository.findAll().stream()
+                .filter(user -> Objects.nonNull(user.getMarathonId()))
+                .filter(user -> user.getMarathon().getIsWork())
+                .filter(user -> LocalDateTime.now().isAfter(user.getMarathon().getDateStart()))
+                .filter(user -> LocalDateTime.now().isBefore(user.getMarathon().getDateEnd()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public UserEntity getUser(Long telegramId) {
+        return getUserEntity(telegramId);
+    }
+
+    private UserEntity getUserEntity(Long telegramId) {
         return userRepository.findByTelegramId(telegramId)
                 .orElseThrow(() -> new RuntimeException("Акканут не найден: " + telegramId));
+    }
+
+    @Transactional
+    public List<UserEntity> getUsersByMarathonId(Long marathonId) {
+        return userRepository.findByMarathonId(marathonId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean userHasAnyMarathon(Long telegramId) {
+        var user = getUserEntity(telegramId);
+        return user.getMarathon() != null;
     }
 }

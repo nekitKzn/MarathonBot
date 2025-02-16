@@ -2,6 +2,7 @@ package com.nekitvp.marathonbot.handler;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.service.HistoryService;
+import com.nekitvp.marathonbot.util.InlineKeyboardBuilder;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 @Component
 @RequiredArgsConstructor
-public class StartHandler implements Handler {
+public class StartHandler extends AbstractHandler {
 
     private final HistoryService historyService;
 
@@ -31,22 +32,16 @@ public class StartHandler implements Handler {
 
         var message = getMessage(update);
 
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        InlineKeyboardBuilder builder = new InlineKeyboardBuilder();
 
-        keyboard.add(List.of(createButtonByState(StateBot.ABOUT_BOT),
-                createButtonByState(StateBot.RULES)));
+        builder.row(
+                createButtonByState(StateBot.ABOUT_BOT),
+                createButtonByState(StateBot.RULES)
+        ).row(
+                createButtonByState(StateBot.MARATHON)
+        );
 
-        if (historyService.checkExistHistoryToday(message.getChat().getId())) {
-            keyboard.add(List.of(createButtonByState(StateBot.DELETE_REPORT)));
-        } else {
-            keyboard.add(List.of(createButtonByState(StateBot.REPORT)));
-        }
-
-        if (historyService.checkExistNullHistoryYesterday(message.getChat().getId())) {
-            keyboard.add(List.of(createButtonByState(StateBot.REPORT_YESTERDAY)));
-        }
-
-        var replyKeyboard = InlineKeyboardMarkup.builder().keyboard(keyboard).build();
+        var replyKeyboard = builder.build();
 
         return getDefaultMessage(message, replyKeyboard, message.getChat().getFirstName());
     }

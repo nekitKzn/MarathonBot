@@ -30,74 +30,70 @@ import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 public class LetterSender {
 
     private final ApplicationEventPublisher publisher;
-    private final UserMarathonService userMarathonService;
+    private final UserService userService;
     private final ReportReminderService reportReminderService;
 
+    /**
+     * Публикует сообщение с кнопкой (если указана) на получателя.
+     */
     private void publish(Long to, String template, StateBot button, Object... args) {
         String text = isEmpty(args) ? template : String.format(template, args);
         log.info("Send message to {}: {}", to, text);
         publisher.publishEvent(new SendTelegramMessageEvent(this, text, to, button));
     }
 
+    /**
+     * Публикует сообщение без кнопки на получателя.
+     */
     private void publish(Long to, String template, Object... args) {
         publish(to, template, null, args);
     }
 
+    /**
+     * Отправляет текстовое сообщение на указанный идентификатор.
+     */
     public void publishText(Long to, String template) {
         publish(to, template);
     }
 
-    public void publishInMarathonsByUserId(Long telegramId, String text) {
-        List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(telegramId);
-        listTo.forEach(to -> publish(to, text));
-    }
 
-    public void sendReport(Long telegramId, String name, List<Pair<String, Boolean>> report) {
-
-        List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(telegramId);
+    /**
+     * Отправляет отчёт за текущий день с указанными данными.
+     */
+    public void sendReport(UserEntity user, List<Pair<String, Boolean>> report) {
 
         StringBuilder reportBuilder = new StringBuilder();
-        var date = LocalDateTime.now();
-        reportBuilder.append("Отчет: ").append(name).append("\n");
+        LocalDateTime date = LocalDateTime.now();
+        reportBuilder.append("Отчет: ").append(user.getTelegramFirstName()).append("\n");
         reportBuilder.append("Дата: ").append(date.toLocalDate());
         reportBuilder.append(" ").append(date.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")))
                 .append("\n\n");
-
-        for (Pair<String, Boolean> entry : report) {
-            String result = Boolean.TRUE.equals(entry.getSecond()) ? "✅" : "❌";
-            reportBuilder.append(result).append(" - ").append(entry.getFirst()).append("\n");
-        }
-
+        reportBuilder.append(buildReportContent(report));
         String text = reportBuilder.toString();
-        listTo.forEach(to -> publish(to, text));
+        publish(user.getMarathon().getGroupId(), text);
     }
 
-    public void sendYesterdayReport(Long telegramId, String name, List<Pair<String, Boolean>> report) {
-
-        List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(telegramId);
+    /**
+     * Отправляет отчёт за вчера с указанными данными.
+     */
+    public void sendYesterdayReport(UserEntity user, List<Pair<String, Boolean>> report) {
 
         StringBuilder reportBuilder = new StringBuilder();
+
         var date = LocalDateTime.now().minusDays(1).toLocalDate();
-        reportBuilder.append("Отчет за вчера: ").append(name).append("\n");
+        reportBuilder.append("Отчет за вчера: ").append(user.getTelegramFirstName()).append("\n");
         reportBuilder.append("Дата: ").append(date).append("\n\n");
-
-        for (Pair<String, Boolean> entry : report) {
-            String result = Boolean.TRUE.equals(entry.getSecond()) ? "✅" : "❌";
-            reportBuilder.append(result).append(" - ").append(entry.getFirst()).append("\n");
-        }
-
+        reportBuilder.append(buildReportContent(report));
         String text = reportBuilder.toString();
-        listTo.forEach(to -> publish(to, text));
+        publish(user.getMarathon().getGroupId(), text);
     }
 
     public void sendWhoDidNotSetReport(UserEntity user) {
         var phrase = reportReminderService.getRandomPhrase();
-        publish(user.getTelegramId(), phrase,  StateBot.REPORT, user.getTelegramFirstName());
+        publish(user.getTelegramId(), phrase, StateBot.REPORT, user.getTelegramFirstName());
     }
 
     public void sendBadReport(UserEntity user, List<GoalEntity> goals) {
-
-        List<Long> listTo = userMarathonService.getGroupIdsByTelegramId(user.getTelegramId());
 
         StringBuilder reportBuilder = new StringBuilder();
         var date = LocalDateTime.now().minusHours(12);
@@ -107,7 +103,7 @@ public class LetterSender {
         reportBuilder.append("Увы, марафонец не справился! \uD83E\uDD72").append("\n\n");
 
         var list = goals.stream()
-                .filter(goal -> goal.getPosition() != 5)
+                .filter(goal -> goal.getPosition() != 0)
                 .toList();
 
         for (GoalEntity goal : list) {
@@ -120,7 +116,7 @@ public class LetterSender {
 
         publish(user.getTelegramId(), "Эхх...\uD83E\uDD72\uD83E\uDD72, я в тебя верил))", StateBot.REPORT_YESTERDAY);
 
-        listTo.forEach(id -> publish(id, text));
+        publish(user.getMarathon().getGroupId(), text);
     }
 
     public void sendMotivation(MotivationEntity motivation) {
@@ -140,7 +136,9 @@ public class LetterSender {
         long currentDay = start.until(now, ChronoUnit.DAYS) + 1;
         long daysLeft = totalDays - currentDay;
 
-        report.append(String.format("Сегодня %d-й день марафона. \uD83C\uDFC3\u200D♂\uFE0F\uD83D\uDCC5 Осталось %d дней.⏳\uD83D\uDD25\n\n", currentDay, daysLeft));
+        report.append(String.format(
+                "Сегодня %d-й день марафона. \uD83C\uDFC3\u200D♂\uFE0F\uD83D\uDCC5 Осталось %d дней.⏳\uD83D\uDD25\n\n",
+                currentDay, daysLeft));
 
         report.append("\uD83C\uDFC6 Рейтинг участников по количеству штрафов:\n");
         report.append("---------------\n");
@@ -182,5 +180,17 @@ public class LetterSender {
         report.append("Продуктивного дня! \uD83D\uDCAA⚡\uD83C\uDF08 \n");
 
         publishText(marathon.getGroupId(), report.toString());
+    }
+
+    /**
+     * Формирует содержимое отчёта из списка пар "цель - статус".
+     */
+    private String buildReportContent(List<Pair<String, Boolean>> report) {
+        StringBuilder contentBuilder = new StringBuilder();
+        for (Pair<String, Boolean> entry : report) {
+            String result = Boolean.TRUE.equals(entry.getSecond()) ? "✅" : "❌";
+            contentBuilder.append(result).append(" - ").append(entry.getFirst()).append("\n");
+        }
+        return contentBuilder.toString();
     }
 }

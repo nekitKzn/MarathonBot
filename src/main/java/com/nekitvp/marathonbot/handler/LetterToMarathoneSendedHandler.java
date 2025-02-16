@@ -10,7 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 @RequiredArgsConstructor
-public class LetterToMarathoneSendedHandler implements Handler {
+public class LetterToMarathoneSendedHandler extends AbstractHandler {
 
     private final MarathonService marathonService;
 

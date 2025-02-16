@@ -13,7 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 @RequiredArgsConstructor
-public class ReportSendYesterdayHandler implements Handler {
+public class ReportSendYesterdayHandler extends AbstractHandler {
 
     private final UserService userService;
     private final HistoryService historyService;
@@ -32,9 +32,10 @@ public class ReportSendYesterdayHandler implements Handler {
         List<Pair<String, Boolean>> report = historyService.updateHistory(telegramId, poll.getOptionIds());
 
         var user = userService.getUser(telegramId);
-        letterSender.sendYesterdayReport(user.getTelegramId(), user.getTelegramFirstName(), report);
+        letterSender.sendYesterdayReport(user, report);
 
         userService.updateUserState(telegramId, StateBot.START);
+
         return SendMessage.builder()
                 .chatId(telegramId)
                 .text(getCurrentState().getMessage())

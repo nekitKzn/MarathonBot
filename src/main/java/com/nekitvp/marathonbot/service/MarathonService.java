@@ -18,9 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class MarathonService {
 
     private final MarathonRepository marathonRepository;
-    private final UserMarathonService userMarathonService;
     private final HistoryService historyService;
     private final LetterSender letterSender;
+    private final UserService userService;
 
     @Transactional
     public void addMarathon(String name, Long groupId) {
@@ -89,14 +89,24 @@ public class MarathonService {
                 .filter(marathon -> marathon.getDateStart() != null)
                 .filter(marathon -> marathon.getDateEnd() != null)
                 .filter(marathon -> LocalDateTime.now().isBefore(marathon.getDateEnd()))
+                .filter(marathon -> LocalDateTime.now().isAfter(marathon.getDateStart()))
                 .forEach(marathon -> {
-                    var users = userMarathonService.getUsersByMarathonId(marathon.getId());
+                    var users = userService.getUsersByMarathonId(marathon.getId());
                     Map<String, Pair<Long, Long>> mapUsers = users.stream()
                             .collect(Collectors.toMap(
                                     UserEntity::getTelegramFirstName,
-                                    user -> historyService.getCountFailByUserInMarathone(user, marathon)
+                                    historyService::getCountFailByUserInMarathone
                             ));
                     letterSender.sendStatistics(marathon, mapUsers);
                 });
+    }
+
+    @Transactional
+    public boolean marathonIsStarted(MarathonEntity marathon) {
+        if (marathon.getDateStart() != null && marathon.getDateEnd() != null) {
+            return LocalDateTime.now().isAfter(marathon.getDateStart()) &&
+                    LocalDateTime.now().isBefore(marathon.getDateEnd());
+        }
+        return false;
     }
 }

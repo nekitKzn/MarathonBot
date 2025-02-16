@@ -16,6 +16,8 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.nekitvp.marathonbot.util.DateTimeUtil.getTodayRange;
+import static com.nekitvp.marathonbot.util.DateTimeUtil.getYesterdayRange;
 import static java.time.LocalDateTime.now;
 
 @Service
@@ -27,46 +29,52 @@ public class HistoryService {
     private final UserService userService;
     private final LetterSender letterSender;
 
+    /**
+     * Заполнение отчета за сегодня
+     */
     @Transactional
     public List<Pair<String, Boolean>> createHistoryGoal(Long telegramId, List<Integer> optionIds) {
 
         var goals = goalService.getGoalByUser(telegramId);
+        List<Pair<String, Boolean>> result = new ArrayList<>();
+        LocalDateTime currentTime = now();
 
-        List<Pair<String, Boolean>> list = new ArrayList<>();
-
-        goals.forEach(goal -> {
-            if (goal.getPosition() == 5) {
-                list.add(Pair.of(goal.getName(), true));
-                var history = createHistoryGoal(goal, true, now());
-                historyRepository.save(history);
+        for (var goal : goals) {
+            boolean completed;
+            if (goal.getPosition() == 0) {
+                completed = true;
             } else {
-                var completed = optionIds.contains(goal.getPosition() - 1);
-                list.add(Pair.of(goal.getName(), completed));
-                var history = createHistoryGoal(goal, completed, now());
-                historyRepository.save(history);
+                completed = optionIds.contains(goal.getPosition() - 1);
             }
-
-        });
-        return list;
+            result.add(Pair.of(goal.getName(), completed));
+            HistoryEntity history = createHistoryGoal(goal, completed, currentTime);
+            historyRepository.save(history);
+        }
+        return result;
     }
 
+    /**
+     * Заполнение отчета за вчера
+     */
     @Transactional
     public List<Pair<String, Boolean>> updateHistory(Long telegramId, List<Integer> optionIds) {
 
-        List<Pair<String, Boolean>> list = new ArrayList<>();
+        List<Pair<String, Boolean>> result = new ArrayList<>();
 
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay().minusDays(1);
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX).minusDays(1);
-        var histories = historyRepository.findByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay);
+        Pair<LocalDateTime, LocalDateTime> yesterdayRange = getYesterdayRange();
 
-        histories.forEach(history -> {
+        var histories = historyRepository.findByTelegramIdAndCreatedAtBetween(
+                telegramId, yesterdayRange.getFirst(), yesterdayRange.getSecond()
+        );
+
+        for (var history : histories) {
             var goal = history.getGoal();
-            var completed = optionIds.contains(goal.getPosition() - 1);
-            list.add(Pair.of(goal.getName(), completed));
+            boolean completed = optionIds.contains(goal.getPosition() - 1);
+            result.add(Pair.of(goal.getName(), completed));
             history.setDone(completed);
-        });
+        }
         historyRepository.saveAll(histories);
-        return list;
+        return result;
     }
 
     private HistoryEntity createHistoryGoal(GoalEntity goal, Boolean completed, LocalDateTime time) {
@@ -77,82 +85,94 @@ public class HistoryService {
                 .build();
     }
 
+    /**
+     * А есть ли у пользователя отчет за сегодня?
+     */
     public boolean checkExistHistoryToday(Long telegramId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        return historyRepository.existsByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay);
+        Pair<LocalDateTime, LocalDateTime> todayRange = getTodayRange();
+        return historyRepository.existsByTelegramIdAndCreatedAtBetween(telegramId, todayRange.getFirst(),
+                todayRange.getSecond());
     }
 
+    /**
+     * А есть ли у пользователя незаполненный отчет за вчера?
+     */
     public boolean checkExistNullHistoryYesterday(Long telegramId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay().minusDays(1);
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX).minusDays(1);
-        return historyRepository.findByTelegramIdAndCreatedAtBetween(telegramId, startOfDay, endOfDay)
+        Pair<LocalDateTime, LocalDateTime> yesterdayRange = getYesterdayRange();
+        return historyRepository.findByTelegramIdAndCreatedAtBetween(telegramId, yesterdayRange.getFirst(),
+                        yesterdayRange.getSecond())
                 .stream().anyMatch(history -> history.getDone() == null);
     }
 
+    /**
+     * Отправляем напоминание тем, кто не отправил отчет
+     */
     @Transactional(readOnly = true)
     public void sendWhoDidNotSetReport() {
-        userService.getPlayingUsers()
-                .forEach(user -> {
-                    var needNotification = !checkExistHistoryToday(user.getTelegramId());
-                    if (needNotification) {
-                        letterSender.sendWhoDidNotSetReport(user);
-                    }
-                });
+        userService.getUsersWhoHasActiveMarathone().forEach(user -> {
+            if (!checkExistHistoryToday(user.getTelegramId())) {
+                letterSender.sendWhoDidNotSetReport(user);
+            }
+        });
     }
 
+    /**
+     * Создаем отчеты за тех, кто не отправил за день
+     */
     @Transactional
-    public void createHistoryWhoFogot() {
-        LocalDateTime endOfDay = now();
-        LocalDateTime startOfDay = endOfDay.minusDays(1);
-        userService.getPlayingUsers()
+    public void createHistoryWhoForgot() {
+        Pair<LocalDateTime, LocalDateTime> yesterdayRange = getYesterdayRange();
+        userService.getUsersWhoHasActiveMarathone()
                 .forEach(user -> {
-                    var exitReport = historyRepository.existsByTelegramIdAndCreatedAtBetween(user.getTelegramId(),
-                            startOfDay,
-                            endOfDay);
+                    var reportExists = historyRepository.existsByTelegramIdAndCreatedAtBetween(user.getTelegramId(),
+                            yesterdayRange.getFirst(),
+                            yesterdayRange.getSecond());
 
-                    if (!exitReport) {
+                    if (!reportExists) {
                         var goals = goalService.getGoalByUser(user.getTelegramId());
                         goals.stream()
-                                .filter(goal -> goal.getPosition() != 5)
+                                .filter(goal -> goal.getPosition() != 0)
                                 .forEach(goal -> {
                                     var history = createHistoryGoal(goal, null, now().minusHours(12));
                                     historyRepository.save(history);
                                 });
-                        var goal5 = goals.stream()
-                                .filter(goal -> goal.getPosition() == 5)
+                        var goalReport = goals.stream()
+                                .filter(goal -> goal.getPosition() == 0)
                                 .findFirst()
-                                .orElseThrow(() -> new RuntimeException("Goal 5 not found"));
-                        var history = createHistoryGoal(goal5, false, now().minusHours(12));
+                                .orElseThrow(() -> new RuntimeException("Goal Report not found"));
+                        var history = createHistoryGoal(goalReport, false, now().minusHours(12));
                         historyRepository.save(history);
                         letterSender.sendBadReport(user, goals);
                     }
                 });
     }
 
-    public Pair<Long, Long> getCountFailByUserInMarathone(UserEntity user, MarathonEntity marathone) {
+    /**
+     * Подсчитывает количество не выполненных целей за марафон у пользователя
+     */
+    @Transactional
+    public Pair<Long, Long> getCountFailByUserInMarathone(UserEntity user) {
         var history = historyRepository.findByTelegramIdAndCreatedAtBetween(
                 user.getTelegramId(),
-                marathone.getDateStart(),
-                marathone.getDateEnd());
+                user.getMarathon().getDateStart(),
+                user.getMarathon().getDateEnd());
 
         var countFail = history.stream().filter(h -> h.getDone() != null && !h.getDone()).count();
         var countNull = history.stream().filter(h -> h.getDone() == null).count();
         return Pair.of(countFail, countFail + countNull);
     }
 
+    /**
+     * Удаление отчета
+     */
+    @Transactional
     public void deleteReport(Long chatId) {
 
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        var histories = historyRepository.findByTelegramIdAndCreatedAtBetween(chatId, startOfDay, endOfDay);
+        Pair<LocalDateTime, LocalDateTime> todayRange = getTodayRange();
 
-        if (!histories.isEmpty()) {
-            var user = userService.getUser(chatId);
-            letterSender.publishInMarathonsByUserId(chatId, String.format("‼\uFE0F Отчет марафонца '%s' анулирован ‼\uFE0F",
-                    user.getTelegramFirstName()));
-        }
+        var histories = historyRepository.findByTelegramIdAndCreatedAtBetween(chatId, todayRange.getFirst(),
+                todayRange.getSecond());
+
         historyRepository.deleteAll(histories);
-
     }
 }

@@ -5,25 +5,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static com.nekitvp.marathonbot.enumBot.StateBot.START;
-
-
 @Component
 @RequiredArgsConstructor
-public class AboutHandler extends AbstractHandler {
-
+public class FailGoalHandler extends AbstractHandler {
 
     @Override
     public StateBot getCurrentState() {
-        return StateBot.ABOUT_BOT;
+        return StateBot.FAIL_GOAL;
     }
 
     @Override
     public Object handle(Update update) {
 
         var message = getMessage(update);
-        var keyboard = getKeyboardDefault(START);
 
-        return getDefaultMessage(message, keyboard);
+        return getDefaultMessage(message, getKeyboardDefault(StateBot.MARATHON));
     }
 }

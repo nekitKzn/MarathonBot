@@ -4,6 +4,7 @@ import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.service.GoalService;
 import com.nekitvp.marathonbot.service.HistoryService;
+import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.UserService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,13 +14,18 @@ import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import static com.nekitvp.marathonbot.util.Constant.NOT_FOUND_MARATHON;
+import static com.nekitvp.marathonbot.util.Constant.NOT_STARTED_MARATHON;
+import static com.nekitvp.marathonbot.util.Constant.REPORT_ALREADY_SEND;
+
 @Component
 @RequiredArgsConstructor
-public class ReportHandler implements Handler {
+public class ReportHandler extends AbstractHandler {
 
     private final GoalService goalService;
     private final UserService userService;
     private final HistoryService historyService;
+    private final MarathonService marathonService;
 
     @Override
     public StateBot getCurrentState() {
@@ -31,19 +37,6 @@ public class ReportHandler implements Handler {
         return StateBot.REPORT_SEND;
     }
 
-    private static final String TEXT_IF_EMPTY = """
-        Ой-ой! 😅 Кажется, ты ещё не на дистанции...  
-        
-        Не беда! Напиши нашему супер-администратору: @nekit_vp, и всё поправим! 💬✌️
-        """;
-
-
-    private static final String TEXT_IF_ALREADY_SEND = """
-        Эй! Ты уже отправил отчёт за сегодня (%s). 📝👍  
-        
-        Круто сработано! 💪 Отдыхай и жду тебя завтра для новых подвигов! ❤️🔥  
-        """;
-
 
     @Override
     public Object handle(Update update) {
@@ -51,30 +44,29 @@ public class ReportHandler implements Handler {
         var message = getMessage(update);
 
         var listGoal = goalService.getGoalByUser(message.getChatId());
+        var user = userService.getUser(message.getChatId());
 
-        // если он не играет или целей нету то выводим пустое сообщение
-        if (!userService.getUser(message.getChatId()).isPlaying() || listGoal.isEmpty()) {
-            userService.updateUserState(message.getChatId(), StateBot.START);
-            return SendMessage.builder()
-                    .chatId(message.getChatId())
-                    .text(TEXT_IF_EMPTY)
-                    .replyMarkup(getKeyboardDefault(StateBot.START))
-                    .build();
+        // проверка на существование марафона
+        if (!userService.userHasAnyMarathon(message.getChatId())) {
+            userService.updateUserState(message.getChatId(), StateBot.MARATHON);
+            return getDefaultMessage(message, NOT_FOUND_MARATHON, getKeyboardDefault(StateBot.MARATHON));
+        }
+
+        // проверка на запуск марафона
+        if (!marathonService.marathonIsStarted(user.getMarathon())) {
+            userService.updateUserState(message.getChatId(), StateBot.MARATHON);
+            return getDefaultMessage(message, NOT_STARTED_MARATHON, getKeyboardDefault(StateBot.MARATHON));
         }
 
         // если отчет уже отправлен
         if (historyService.checkExistHistoryToday(message.getChatId())) {
-            userService.updateUserState(message.getChatId(), StateBot.START);
+            userService.updateUserState(message.getChatId(), StateBot.MARATHON);
             var day = LocalDateTime.now().toLocalDate().toString();
-            return SendMessage.builder()
-                    .chatId(message.getChatId())
-                    .text(String.format(TEXT_IF_ALREADY_SEND, day))
-                    .replyMarkup(getKeyboardDefault(StateBot.START))
-                    .build();
+            return getDefaultMessage(message, REPORT_ALREADY_SEND, getKeyboardDefault(StateBot.MARATHON), day);
         }
-        
+
         List<String> options = listGoal.stream()
-                .filter(goal -> goal.getPosition() != 5)
+                .filter(goal -> goal.getPosition() != 0)
                 .map(GoalEntity::getName).toList();
 
         SendPoll poll = new SendPoll();

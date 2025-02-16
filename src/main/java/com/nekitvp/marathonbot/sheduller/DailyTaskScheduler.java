@@ -41,7 +41,7 @@ public class DailyTaskScheduler {
     @Scheduled(cron = "0 0 0 * * ?", zone = "Europe/Moscow")
     public void runTaskEveryDayAt00() {
         log.info("Scheduler Reports started...");
-        historyService.createHistoryWhoFogot();
+        historyService.createHistoryWhoForgot();
     }
 
     /**

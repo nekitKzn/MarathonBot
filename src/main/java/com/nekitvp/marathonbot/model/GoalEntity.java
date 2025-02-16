@@ -35,7 +35,5 @@ public class GoalEntity {
     @Column(name = "position", nullable = false)
     private Integer position;
 
-//    @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<History> history;
 }
 

@@ -12,7 +12,7 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 @Component
 @RequiredArgsConstructor
-public class RulesHandler implements Handler{
+public class RulesHandler extends AbstractHandler {
 
     @Override
     public StateBot getCurrentState() {
@@ -23,12 +23,7 @@ public class RulesHandler implements Handler{
     public Object handle(Update update) {
 
         var message = getMessage(update);
-
-        var replyKeyboard = InlineKeyboardMarkup.builder()
-                .keyboard(List.of(
-                                List.of(createButtonByState(StateBot.START))
-                        )
-                ).build();
+        var replyKeyboard = getKeyboardDefault(StateBot.START);
 
         return getDefaultMessage(message, replyKeyboard);
     }

@@ -17,7 +17,7 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 @Component
 @RequiredArgsConstructor
-public class LetterToMarathonHandler implements Handler {
+public class LetterToMarathonHandler extends AbstractHandler  {
 
     private final MarathonService marathonService;
 

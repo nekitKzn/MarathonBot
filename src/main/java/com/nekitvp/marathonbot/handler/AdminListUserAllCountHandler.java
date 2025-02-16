@@ -18,7 +18,7 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.getNumberSpase;
 
 @Component
 @RequiredArgsConstructor
-public class AdminListUserAllCountHandler implements Handler {
+public class AdminListUserAllCountHandler extends AbstractHandler {
 
     private final UserService userService;
 

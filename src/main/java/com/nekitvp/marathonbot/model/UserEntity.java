@@ -41,5 +41,10 @@ public class UserEntity {
     @Builder.Default
     private Long countChangeStateAll = 0L;
 
-    private boolean isPlaying;
+    @Column(name = "marathon_id", updatable = false, insertable = false)
+    private Long marathonId;
+
+    @ManyToOne
+    @JoinColumn(name = "marathon_id", referencedColumnName = "id")
+    private MarathonEntity marathon;
 }

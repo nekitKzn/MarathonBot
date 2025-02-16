@@ -15,3 +15,5 @@ databaseChangeLog:
       file: /db/changelog/v1/2025-01-13-add-marathone-date.yml
   - include:
       file: /db/changelog/v1/2025-01-25-add-fail-count.yml
+  - include:
+      file: /db/changelog/v1/2025-02-15-add-string-goal-history-and-delete-playing.yml

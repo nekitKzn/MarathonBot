@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01_add_string_goal_in_history
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: history
+            columns:
+              - column:
+                  name: goal_name
+                  type: varchar(97)
+        - modifyDataType:
+            columnName: name
+            tableName: goal
+            newDataType: varchar(97)
+        - dropColumn:
+            columnName: is_playing
+            tableName: users
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: marathon_id
+                  type: bigint
+                  constraints:
+                    referencedTableName: marathon
+                    referencedColumnNames: id
+                    foreignKeyName: users_marathon_id_fk
+        - dropTable:
+            tableName: user_marathon

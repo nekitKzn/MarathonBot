@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -38,4 +39,12 @@ public class HistoryEntity {
 
     @Column(name = "done")
     private Boolean done;
+
+    @Column(name = "goal_name")
+    private String goalName;
+
+    @PrePersist
+    public void prePersist() {
+        this.goalName = goal.getName();
+    }
 }

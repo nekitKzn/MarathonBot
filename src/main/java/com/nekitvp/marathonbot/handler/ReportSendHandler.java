@@ -13,7 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 @RequiredArgsConstructor
-public class ReportSendHandler implements Handler {
+public class ReportSendHandler extends AbstractHandler {
 
     private final UserService userService;
     private final HistoryService historyService;
@@ -34,7 +34,7 @@ public class ReportSendHandler implements Handler {
         List<Pair<String, Boolean>> report = historyService.createHistoryGoal(telegramId, poll.getOptionIds());
 
         var user = userService.getUser(telegramId);
-        letterSender.sendReport(user.getTelegramId(), user.getTelegramFirstName(), report);
+        letterSender.sendReport(user, report);
 
         userService.updateUserState(telegramId, StateBot.START);
         return SendMessage.builder()

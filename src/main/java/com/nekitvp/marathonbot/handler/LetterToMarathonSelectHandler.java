@@ -11,7 +11,7 @@ import static com.nekitvp.marathonbot.enumBot.StateBot.LETTER_TO_MARATHON_SELECT
 
 @Component
 @RequiredArgsConstructor
-public class LetterToMarathonSelectHandler implements Handler {
+public class LetterToMarathonSelectHandler extends AbstractHandler {
 
     private final MarathonService marathonService;
     private final UserService userService;
