@@ -12,16 +12,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
-import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
+import static com.nekitvp.marathonbot.util.Constant.FOGOT_MESSAGE_IN_GROUP;
 import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 @Service
@@ -192,5 +190,17 @@ public class LetterSender {
             contentBuilder.append(result).append(" - ").append(entry.getFirst()).append("\n");
         }
         return contentBuilder.toString();
+    }
+
+    /**
+     * Сообщение в группы о марафонцах, которые не отправили отчет
+     */
+    public void sendForgotMessageInGroup(Map<Long, List<UserEntity>> map) {
+        map.forEach((key, value) -> {
+            var text = value.stream()
+                    .map(UserEntity::getTelegramFirstName)
+                    .collect(Collectors.joining("\n"));
+            publish(key, FOGOT_MESSAGE_IN_GROUP, text);
+        });
     }
 }

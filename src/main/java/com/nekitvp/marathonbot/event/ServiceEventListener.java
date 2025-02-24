@@ -8,6 +8,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,25 +25,39 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 public class ServiceEventListener {
 
     private final TelegramBot telegramBot;
-
     @Async
     @EventListener
     public void handleSendTelegramMessageEvent(SendTelegramMessageEvent event) {
+        try {
+            sendTelegramMessage(event);
+        } catch (TelegramApiException e) {
+            log.error("Не удалось отправить сообщение после всех попыток: {}", event.getText(), e);
+        }
+    }
+
+    @Retryable(
+            include = {TelegramApiException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000)
+    )
+    private void sendTelegramMessage(SendTelegramMessageEvent event) throws TelegramApiException {
         var send = SendMessage.builder()
-                        .text(event.getText())
-                        .chatId(event.getChatId())
-                        .build();
+                .text(event.getText())
+                .chatId(event.getChatId())
+                .build();
 
         if (event.getButton() != null) {
             var replyKeyboard = InlineKeyboardMarkup.builder()
-                    .keyboard(List.of(List.of(createButtonByState(event.getButton())))).build();
+                    .keyboard(List.of(List.of(createButtonByState(event.getButton()))))
+                    .build();
             send.setReplyMarkup(replyKeyboard);
         }
 
         try {
             telegramBot.execute(send);
         } catch (TelegramApiException e) {
-            log.debug("Ошибка при отправке", e);
+            log.warn("Ошибка при отправке сообщения в чат: {}", event.getChatId(), e);
+            throw e;
         }
     }
 }

@@ -1,9 +1,7 @@
 package com.nekitvp.marathonbot.handler;
 
-import com.nekitvp.marathonbot.enumBot.FunctionBot;
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.service.HistoryService;
-import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.UserService;
 import com.nekitvp.marathonbot.util.InlineKeyboardBuilder;
 import java.time.format.DateTimeFormatter;
@@ -12,16 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static com.nekitvp.marathonbot.enumBot.StateBot.ADMIN_LIST_USERS_UPDATE_COUNT;
 import static com.nekitvp.marathonbot.enumBot.StateBot.DELETE_REPORT;
 import static com.nekitvp.marathonbot.enumBot.StateBot.FAIL_GOAL;
 import static com.nekitvp.marathonbot.enumBot.StateBot.GOAL;
-import static com.nekitvp.marathonbot.enumBot.StateBot.LETTER_TO_MARATHON;
 import static com.nekitvp.marathonbot.enumBot.StateBot.REPORT;
 import static com.nekitvp.marathonbot.enumBot.StateBot.REPORT_YESTERDAY;
 import static com.nekitvp.marathonbot.enumBot.StateBot.START;
 import static com.nekitvp.marathonbot.util.Constant.NOT_FOUND_MARATHON;
-import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByFunction;
 import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 @Component
@@ -51,7 +46,10 @@ public class MarathonHandler extends AbstractHandler {
         var marathon = user.getMarathon();
         var freeCount = marathon.getFreeFailCount();
 
-        var failCount = historyService.getCountFailByUserInMarathone(user);
+        var existReportToday = historyService.checkExistHistoryToday(user.getTelegramId());
+        var existREportYestarday = !historyService.checkExistNullHistoryYesterday(user.getTelegramId());
+
+        var failCount = historyService.getCountFailByUserInMarathon(user);
         String failCountString;
         String resultCash;
         if (Objects.equals(failCount.getFirst(), failCount.getSecond())) {
@@ -83,7 +81,9 @@ public class MarathonHandler extends AbstractHandler {
                 marathon.getDateEnd().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm")),
                 freeCount,
                 failCountString,
-                resultCash
+                resultCash,
+                existReportToday ? "🟢" : "🔴",
+                existREportYestarday ? "🟢" : "🔴"
         );
     }
 }

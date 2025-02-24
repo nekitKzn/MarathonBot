@@ -33,5 +33,16 @@ public class Constant {
             Давай заполним этот пустой экран, чтобы твоя звезда засияла! 📝🔥
             """;
 
+    public static final String FOGOT_MESSAGE_IN_GROUP = """
+            ⚠️ Эй, марафонцы! Жду еще ваш отчет! 💪😎
+            
+            %s
+            """;
+
+    public static final String NOT_FOUND_FAIL_GOAL = """
+            Ты еще без штрафов! МОЛОТОК! 😎 
+            Продолжай в том же духе! 💪
+            """;
+
 
 }

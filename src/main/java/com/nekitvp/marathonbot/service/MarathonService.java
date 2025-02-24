@@ -95,7 +95,7 @@ public class MarathonService {
                     Map<String, Pair<Long, Long>> mapUsers = users.stream()
                             .collect(Collectors.toMap(
                                     UserEntity::getTelegramFirstName,
-                                    historyService::getCountFailByUserInMarathone
+                                    historyService::getCountFailByUserInMarathon
                             ));
                     letterSender.sendStatistics(marathon, mapUsers);
                 });

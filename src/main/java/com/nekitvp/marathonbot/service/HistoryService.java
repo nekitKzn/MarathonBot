@@ -3,14 +3,15 @@ package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.model.HistoryEntity;
-import com.nekitvp.marathonbot.model.MarathonEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.HistoryRepository;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -105,15 +106,23 @@ public class HistoryService {
     }
 
     /**
-     * Отправляем напоминание тем, кто не отправил отчет
+     * Отправляем напоминание тем, кто не отправил отчет, а также в группу
      */
     @Transactional(readOnly = true)
     public void sendWhoDidNotSetReport() {
+        Set<UserEntity> userSet = new HashSet<>();
+
         userService.getUsersWhoHasActiveMarathone().forEach(user -> {
             if (!checkExistHistoryToday(user.getTelegramId())) {
                 letterSender.sendWhoDidNotSetReport(user);
+                userSet.add(user);
             }
         });
+
+        Map<Long, List<UserEntity>> map = userSet.stream()
+                .collect(Collectors.groupingBy(user -> user.getMarathon().getGroupId()));
+
+        letterSender.sendForgotMessageInGroup(map);
     }
 
     /**
@@ -151,7 +160,7 @@ public class HistoryService {
      * Подсчитывает количество не выполненных целей за марафон у пользователя
      */
     @Transactional
-    public Pair<Long, Long> getCountFailByUserInMarathone(UserEntity user) {
+    public Pair<Long, Long> getCountFailByUserInMarathon(UserEntity user) {
         var history = historyRepository.findByTelegramIdAndCreatedAtBetween(
                 user.getTelegramId(),
                 user.getMarathon().getDateStart(),
@@ -161,6 +170,22 @@ public class HistoryService {
         var countNull = history.stream().filter(h -> h.getDone() == null).count();
         return Pair.of(countFail, countFail + countNull);
     }
+
+    /**
+     * Получение штрафов за марафон
+     */
+    @Transactional
+    public List<HistoryEntity> getFailByUserInMarathon(UserEntity user) {
+        var history = historyRepository.findByTelegramIdAndCreatedAtBetween(
+                user.getTelegramId(),
+                user.getMarathon().getDateStart(),
+                user.getMarathon().getDateEnd());
+
+        return history.stream()
+                .filter(his -> !his.getDone())
+                .toList();
+    }
+
 
     /**
      * Удаление отчета
