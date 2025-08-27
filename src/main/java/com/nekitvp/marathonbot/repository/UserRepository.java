@@ -16,6 +16,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     boolean existsByTelegramIdAndAdminIsTrue(Long telegramId);
 
+    boolean existsByTelegramIdAndManagerIsTrue(Long telegramId);
+
     List<UserEntity> findByMarathonId(Long marathonId);
 
 }

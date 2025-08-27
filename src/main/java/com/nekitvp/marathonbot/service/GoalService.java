@@ -13,8 +13,15 @@ public class GoalService {
 
     private final GoalRepository goalRepository;
 
+    private final UserService userService;
+
+    /**
+     * Достаем актуальные цели у пользователя
+     */
     @Transactional(readOnly = true)
     public List<GoalEntity> getGoalByUser(Long chatId) {
-        return goalRepository.findAllByUserIdOrderByPosition(chatId);
+        var user = userService.getUser(chatId);
+        var marathonId = user.getMarathonId();
+        return goalRepository.findAllByUserIdAndMarathonIdOrderByPosition(chatId, marathonId);
     }
 }

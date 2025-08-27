@@ -20,6 +20,7 @@ import java.util.Objects;
 public class UpdateHandler {
 
     private static final String ADMIN_COMMAND = "/admin";
+    private static final String MANAGER_COMMAND = "/manager";
 
     private final UserService userService;
     private final FunctionService functionService;
@@ -39,6 +40,10 @@ public class UpdateHandler {
             Message message = update.getMessage();
             if (adminCommand(message)) {
                 userService.updateUserState(message.getFrom().getId(), StateBot.ADMIN_MAIN);
+            }
+
+            if (managerCommand(message)) {
+                userService.updateUserState(message.getFrom().getId(), StateBot.MANAGER_MAIN);
             }
 
             StateBot state = userService.getUserState(update.getMessage().getFrom().getId(), message);
@@ -111,6 +116,11 @@ public class UpdateHandler {
     private boolean adminCommand(Message message) {
         return message.hasEntities() && ADMIN_COMMAND.equals(message.getText())
                 && userService.checkIsAdmin(message.getFrom().getId());
+    }
+
+    private boolean managerCommand(Message message) {
+        return message.hasEntities() && MANAGER_COMMAND.equals(message.getText())
+                && userService.checkIsManager(message.getFrom().getId());
     }
 
     private boolean isMessageWithText(Update update) {

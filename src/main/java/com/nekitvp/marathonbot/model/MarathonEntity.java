@@ -51,10 +51,6 @@ public class MarathonEntity {
     @Column(name = "select_for_send_message")
     private Boolean select = false;
 
-    @Builder.Default
-    @Column(name = "is_work")
-    private Boolean isWork = false;
-
     @Column(name = "free_fail_count")
     private Integer freeFailCount;
 }

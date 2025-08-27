@@ -20,8 +20,6 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 @RequiredArgsConstructor
 public class StartHandler extends AbstractHandler {
 
-    private final HistoryService historyService;
-
     @Override
     public StateBot getCurrentState() {
         return StateBot.START;

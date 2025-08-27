@@ -1,6 +1,7 @@
-package com.nekitvp.marathonbot.handler;
+package com.nekitvp.marathonbot.handler.admin;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
+import com.nekitvp.marathonbot.handler.AbstractHandler;
 import com.nekitvp.marathonbot.service.LetterSender;
 import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.UserService;

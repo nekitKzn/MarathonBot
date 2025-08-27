@@ -63,7 +63,10 @@ public class MarathonService {
 
     private List<MarathonEntity> getPlayingMarathone() {
         return marathonRepository.findAll().stream()
-                .filter(MarathonEntity::getIsWork)
+                .filter(marathon -> marathon.getDateStart() != null)
+                .filter(marathon -> marathon.getDateEnd() != null)
+                .filter(marathon -> LocalDateTime.now().isBefore(marathon.getDateEnd()))
+                .filter(marathon -> LocalDateTime.now().isAfter(marathon.getDateStart()))
                 .toList();
     }
 
@@ -82,14 +85,12 @@ public class MarathonService {
         return entity.getGroupId();
     }
 
+    /**
+     * Метод, для рассылки статистики активных марафонов
+     */
     @Transactional
     public void sendStatistics() {
-        var listMarathons = getPlayingMarathone();
-        listMarathons.stream()
-                .filter(marathon -> marathon.getDateStart() != null)
-                .filter(marathon -> marathon.getDateEnd() != null)
-                .filter(marathon -> LocalDateTime.now().isBefore(marathon.getDateEnd()))
-                .filter(marathon -> LocalDateTime.now().isAfter(marathon.getDateStart()))
+        getPlayingMarathone()
                 .forEach(marathon -> {
                     var users = userService.getUsersByMarathonId(marathon.getId());
                     Map<String, Pair<Long, Long>> mapUsers = users.stream()
@@ -101,6 +102,9 @@ public class MarathonService {
                 });
     }
 
+    /**
+     * Метод, возвращающий булеан, а начался ли марафон
+     */
     @Transactional
     public boolean marathonIsStarted(MarathonEntity marathon) {
         if (marathon.getDateStart() != null && marathon.getDateEnd() != null) {

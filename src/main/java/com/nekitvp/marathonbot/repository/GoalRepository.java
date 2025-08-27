@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GoalRepository extends JpaRepository<GoalEntity, Long> {
 
-    List<GoalEntity> findAllByUserIdOrderByPosition(Long userId);
+    List<GoalEntity> findAllByUserIdAndMarathonIdOrderByPosition(Long userId, Long marathonId);
 }

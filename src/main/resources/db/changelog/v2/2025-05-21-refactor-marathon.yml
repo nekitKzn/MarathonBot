@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: delete-is-work-field
+      author: lobanov_nikita
+      changes:
+        - dropColumn:
+            tableName: marathon
+            columnName: is_work
+  - changeSet:
+      id: add-field-marathon-id-in-goal
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: goal
+            columns:
+              - column:
+                  name: marathon_id
+                  type: bigint
+                  constraints:
+                    referencedTableName: marathon
+                    referencedColumnNames: id
+                    foreignKeyName: goal_marathon_id_fk

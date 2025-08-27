@@ -1,6 +1,7 @@
-package com.nekitvp.marathonbot.handler;
+package com.nekitvp.marathonbot.handler.admin;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
+import com.nekitvp.marathonbot.handler.AbstractHandler;
 import com.nekitvp.marathonbot.service.MarathonService;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 @Component
 @RequiredArgsConstructor
-public class LetterToMarathonHandler extends AbstractHandler  {
+public class LetterToMarathonHandler extends AbstractHandler {
 
     private final MarathonService marathonService;
 

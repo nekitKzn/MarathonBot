@@ -1,14 +1,12 @@
-package com.nekitvp.marathonbot.handler;
+package com.nekitvp.marathonbot.handler.admin;
 
 import com.nekitvp.marathonbot.enumBot.FunctionBot;
 import com.nekitvp.marathonbot.enumBot.StateBot;
+import com.nekitvp.marathonbot.handler.AbstractHandler;
 import com.nekitvp.marathonbot.util.InlineKeyboardBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-
-import java.util.List;
 
 import static com.nekitvp.marathonbot.enumBot.StateBot.ADMIN_LIST_USERS_UPDATE_COUNT;
 import static com.nekitvp.marathonbot.enumBot.StateBot.LETTER_TO_MARATHON;
@@ -19,7 +17,7 @@ import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 @Component
 @RequiredArgsConstructor
-public class AdminMainHandler extends AbstractHandler  {
+public class AdminMainHandler extends AbstractHandler {
 
     @Override
     public StateBot getCurrentState() {

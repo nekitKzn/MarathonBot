@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: /db/changelog/v1/changelog_v1.0_cumulative.yml
+  - include:
+      file: /db/changelog/v2/changelog_v2.0_cumulative.yml
