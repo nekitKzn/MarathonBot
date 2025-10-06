@@ -20,3 +20,13 @@ databaseChangeLog:
                     referencedTableName: marathon
                     referencedColumnNames: id
                     foreignKeyName: goal_marathon_id_fk
+  - changeSet:
+      id: delete-columns
+      author: lobanov_nikita
+      changes:
+        - dropColumn:
+            tableName: history
+            columnName: goal_name
+        - dropColumn:
+            tableName: users
+            columnName: manager

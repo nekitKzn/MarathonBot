@@ -39,12 +39,4 @@ public class HistoryEntity {
 
     @Column(name = "done")
     private Boolean done;
-
-    @Column(name = "goal_name")
-    private String goalName;
-
-    @PrePersist
-    public void prePersist() {
-        this.goalName = goal.getName();
-    }
 }

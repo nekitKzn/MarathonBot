@@ -119,8 +119,7 @@ public class UpdateHandler {
     }
 
     private boolean managerCommand(Message message) {
-        return message.hasEntities() && MANAGER_COMMAND.equals(message.getText())
-                && userService.checkIsManager(message.getFrom().getId());
+        return message.hasEntities() && MANAGER_COMMAND.equals(message.getText());
     }
 
     private boolean isMessageWithText(Update update) {

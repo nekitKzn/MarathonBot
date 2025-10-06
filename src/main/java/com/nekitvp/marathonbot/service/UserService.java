@@ -45,11 +45,6 @@ public class UserService {
     }
 
     @Transactional
-    public boolean checkIsManager(Long id) {
-        return userRepository.existsByTelegramIdAndManagerIsTrue(id);
-    }
-
-    @Transactional
     public UserEntity findByUserName(String userName) {
         return userRepository.findByTelegramUserName(userName)
                 .orElse(null);

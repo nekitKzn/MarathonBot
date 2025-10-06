@@ -36,9 +36,6 @@ public class UserEntity {
     private Boolean admin = false;
 
     @Builder.Default
-    private Boolean manager = false;
-
-    @Builder.Default
     private Long countChangeState = 0L;
 
     @Builder.Default

@@ -31,7 +31,7 @@ public class FailGoalHandler extends AbstractHandler {
         var failHistory = historyService.getFailByUserInMarathon(user);
 
         var text = failHistory.stream()
-                .map(history -> history.getCreatedAt().toLocalDate().toString() + " - " + history.getGoalName())
+                .map(history -> history.getCreatedAt().toLocalDate().toString() + " - " + history.getGoal().getName())
                 .collect(Collectors.joining("\n"));
 
         if (failHistory.isEmpty()) {

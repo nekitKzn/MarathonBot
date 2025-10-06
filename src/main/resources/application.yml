@@ -1,6 +1,6 @@
 bot: # t.me/marathon_discipline_develop_bot
   name: Марафон Бот DEVELOP
-  token: ${TELEGRAM_TOKEN_DEVELOP}
+  token: ${TELEGRAM_TOKEN_DEVELOP:7667747050:AAHSlaIf0nrHQFa0bDD0mWtFHeHWXrZPD2k}
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:marathonBD}
