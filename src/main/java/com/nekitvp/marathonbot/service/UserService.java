@@ -85,7 +85,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserEntity> getUsersWhoHasActiveMarathone() {
+    public List<UserEntity> getUsersWhoHasActiveMarathon() {
         return userRepository.findAll().stream()
                 .filter(user -> Objects.nonNull(user.getMarathonId()))
                 .filter(user -> LocalDateTime.now().isAfter(user.getMarathon().getDateStart()))

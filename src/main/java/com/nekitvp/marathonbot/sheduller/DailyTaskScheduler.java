@@ -22,8 +22,7 @@ public class DailyTaskScheduler {
      */
     @Scheduled(cron = "0 0 22 * * ?", zone = "Europe/Moscow")
     public void runTaskEveryDayAt10PM() {
-        log.info("Scheduler Notification started...");
-        historyService.sendWhoDidNotSetReport();
+        notificationFogot();
     }
 
     /**
@@ -31,6 +30,10 @@ public class DailyTaskScheduler {
      */
     @Scheduled(cron = "0 50 23 * * ?", zone = "Europe/Moscow")
     public void runTaskEveryDayAt23PM() {
+        notificationFogot();
+    }
+
+    private void notificationFogot() {
         log.info("Scheduler Notification started...");
         historyService.sendWhoDidNotSetReport();
     }
@@ -49,8 +52,7 @@ public class DailyTaskScheduler {
      */
     @Scheduled(cron = "0 0 9 * * ?", zone = "Europe/Moscow")
     public void motivation9() {
-        log.info("Scheduler Motivation started...");
-        motivationService.sendRandomMotivation();
+        motivationStart();
     }
 
     /**
@@ -58,8 +60,7 @@ public class DailyTaskScheduler {
      */
     @Scheduled(cron = "0 0 14 * * ?", zone = "Europe/Moscow")
     public void motivation14() {
-        log.info("Scheduler Motivation started...");
-        motivationService.sendRandomMotivation();
+        motivationStart();
     }
 
     /**
@@ -67,8 +68,7 @@ public class DailyTaskScheduler {
      */
     @Scheduled(cron = "0 0 21 * * ?", zone = "Europe/Moscow")
     public void motivation21() {
-        log.info("Scheduler Motivation started...");
-        motivationService.sendRandomMotivation();
+        motivationStart();
     }
 
     /**
@@ -78,5 +78,10 @@ public class DailyTaskScheduler {
     public void resultStatistics() {
         log.info("Scheduler Statistics started...");
         marathonService.sendStatistics();
+    }
+
+    private void motivationStart() {
+        log.info("Scheduler Motivation started...");
+        motivationService.sendRandomMotivation();
     }
 }

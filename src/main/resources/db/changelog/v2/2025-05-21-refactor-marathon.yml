@@ -27,6 +27,49 @@ databaseChangeLog:
         - dropColumn:
             tableName: history
             columnName: goal_name
-        - dropColumn:
-            tableName: users
-            columnName: manager
+  - changeSet:
+      id: migrate-goal-marathon-ids
+      author: lobanov_nikita
+      changes:
+        - sql:
+            sql: |
+              UPDATE goal g
+              SET marathon_id = u.marathon_id
+              FROM users u
+              WHERE g.user_id = u.telegram_id
+                AND u.marathon_id IS NOT NULL;
+  - changeSet:
+      id: create-marathon-manager-relation
+      author: lobanov_nikita
+      changes:
+        - createTable:
+            tableName: marathon_manager
+            columns:
+              - column:
+                  name: marathon_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: marathon_manager
+            columnNames: marathon_id, user_id
+            constraintName: pk_marathon_manager
+        - addForeignKeyConstraint:
+            baseTableName: marathon_manager
+            baseColumnNames: marathon_id
+            referencedTableName: marathon
+            referencedColumnNames: id
+            constraintName: fk_marathon_manager_marathon
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: marathon_manager
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: telegram_id
+            constraintName: fk_marathon_manager_user
+            onDelete: CASCADE

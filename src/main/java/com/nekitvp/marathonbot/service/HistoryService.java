@@ -5,6 +5,8 @@ import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.model.HistoryEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.HistoryRepository;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -112,7 +114,7 @@ public class HistoryService {
     public void sendWhoDidNotSetReport() {
         Set<UserEntity> userSet = new HashSet<>();
 
-        userService.getUsersWhoHasActiveMarathone().forEach(user -> {
+        userService.getUsersWhoHasActiveMarathon().forEach(user -> {
             if (!checkExistHistoryToday(user.getTelegramId())) {
                 letterSender.sendWhoDidNotSetReport(user);
                 userSet.add(user);
@@ -131,8 +133,16 @@ public class HistoryService {
     @Transactional
     public void createHistoryWhoForgot() {
         Pair<LocalDateTime, LocalDateTime> yesterdayRange = getYesterdayRange();
-        userService.getUsersWhoHasActiveMarathone()
+        var timeReport = yesterdayRange.getFirst().plusHours(12);
+        List<HistoryEntity> historiesToSave = new ArrayList<>();
+
+        userService.getUsersWhoHasActiveMarathon()
                 .forEach(user -> {
+                    if (user.getMarathon().getDateStart().toLocalDate()
+                            .isAfter(LocalDate.now().minusDays(1))) {
+                        return;
+                    }
+
                     var reportExists = historyRepository.existsByTelegramIdAndCreatedAtBetween(user.getTelegramId(),
                             yesterdayRange.getFirst(),
                             yesterdayRange.getSecond());
@@ -142,18 +152,19 @@ public class HistoryService {
                         goals.stream()
                                 .filter(goal -> goal.getPosition() != 0)
                                 .forEach(goal -> {
-                                    var history = createHistoryGoal(goal, null, now().minusHours(12));
-                                    historyRepository.save(history);
+                                    var history = createHistoryGoal(goal, null, timeReport);
+                                    historiesToSave.add(history);
                                 });
                         var goalReport = goals.stream()
                                 .filter(goal -> goal.getPosition() == 0)
                                 .findFirst()
                                 .orElseThrow(() -> new RuntimeException("Goal Report not found"));
-                        var history = createHistoryGoal(goalReport, false, now().minusHours(12));
-                        historyRepository.save(history);
+                        var history = createHistoryGoal(goalReport, false, timeReport);
+                        historiesToSave.add(history);
                         letterSender.sendBadReport(user, goals);
                     }
                 });
+        historyRepository.saveAll(historiesToSave);
     }
 
     /**

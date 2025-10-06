@@ -1,13 +1,12 @@
 package com.nekitvp.marathonbot.model;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,6 +50,10 @@ public class MarathonEntity {
     @Column(name = "select_for_send_message")
     private Boolean select = false;
 
+    @Builder.Default
     @Column(name = "free_fail_count")
-    private Integer freeFailCount;
+    private Integer freeFailCount = 5;
+
+    @ManyToMany(mappedBy = "managedMarathons")
+    private Set<UserEntity> managers = new HashSet<>();
 }
