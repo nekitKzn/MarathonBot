@@ -5,15 +5,12 @@ import com.nekitvp.marathonbot.service.HistoryService;
 import com.nekitvp.marathonbot.service.LetterSender;
 import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.UserService;
-import java.time.LocalDateTime;
+import com.nekitvp.marathonbot.util.MessageTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static com.nekitvp.marathonbot.util.Constant.NOT_FOUND_MARATHON;
-import static com.nekitvp.marathonbot.util.Constant.NOT_STARTED_MARATHON;
-import static com.nekitvp.marathonbot.util.Constant.REPORT_ALREADY_SEND;
-import static com.nekitvp.marathonbot.util.Constant.REPORT_NOT_SEND;
+import static com.nekitvp.marathonbot.util.Constant.*;
 
 @Component
 @RequiredArgsConstructor
@@ -56,9 +53,8 @@ public class DeleteReportHandler extends AbstractHandler {
 
         historyService.deleteReport(message.getChatId());
 
-        String text = String.format("‼\uFE0F Отчет марафонца '%s' анулирован ‼\uFE0F", user.getTelegramFirstName());
         var groupId = user.getMarathon().getGroupId();
-        letterSender.publishText(groupId, text);
+        letterSender.publishEscape(groupId, MessageTemplate.REPORT_CANCELLED, user.getTelegramFirstName());
 
         userService.updateUserState(message.getChatId(), StateBot.START);
         return getDefaultMessage(message, getKeyboardDefault(StateBot.START));

@@ -2,10 +2,15 @@ package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.repository.GoalRepository;
-import java.util.List;
+import com.nekitvp.marathonbot.util.MarkdownUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +19,12 @@ public class GoalService {
     private final GoalRepository goalRepository;
 
     private final UserService userService;
+    private final TemplatePhraseService templatePhraseService;
+    private final LetterSender letterSender;
+
+    @Lazy
+    @Autowired
+    private MarathonService marathonService;
 
     /**
      * Достаем актуальные цели у пользователя
@@ -23,5 +34,27 @@ public class GoalService {
         var user = userService.getUser(chatId);
         var marathonId = user.getMarathonId();
         return goalRepository.findAllByUserIdAndMarathonIdOrderByPosition(chatId, marathonId);
+    }
+
+    @Transactional
+    public void sendEveningQuestion() {
+        List<GoalEntity> listForSave = new ArrayList<>();
+        marathonService.getAllMarathonsForEveningQuestion()
+                .forEach(marathon -> {
+                    GoalEntity goal = goalRepository.findGoalForEveningQuestion(marathon.getId());
+                    if (goal == null) return;
+
+                    var user = userService.getUser(goal.getUserId());
+
+                    var template = templatePhraseService.getRandomEveningQuestion();
+                    var goalName = MarkdownUtil.escape(goal.getName());
+                    var userName = MarkdownUtil.escape(user.getTelegramFirstName());
+
+                    letterSender.publish(marathon.getGroupId(), String.format(template, userName, goalName));
+
+                    goal.setAskedCount(goal.getAskedCount() + 1);
+                    listForSave.add(goal);
+                });
+        goalRepository.saveAll(listForSave);
     }
 }

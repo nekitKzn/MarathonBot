@@ -3,6 +3,7 @@ package com.nekitvp.marathonbot.handler;
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.service.HistoryService;
+import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.UserService;
 import com.nekitvp.marathonbot.util.InlineKeyboardBuilder;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class MarathonHandler extends AbstractHandler {
 
     private final UserService userService;
     private final HistoryService historyService;
+    private final MarathonService marathonService;
 
     @Override
     public StateBot getCurrentState() {
@@ -52,6 +54,12 @@ public class MarathonHandler extends AbstractHandler {
         var failCount = historyService.getCountFailByUserInMarathon(user);
         String failCountString;
         String resultCash;
+        LocalDateTime todayTime = LocalDateTime.now();
+        LocalDate todayDay = todayTime.toLocalDate();
+
+        boolean restDay = historyService.isRestDay(marathon, todayDay);
+        boolean isBeforeStart = todayTime.isBefore(marathon.getDateStart());
+        boolean isAfterEnd = todayTime.isAfter(marathon.getDateEnd());
 
         if (Objects.equals(failCount.getFirst(), failCount.getSecond())) {
             failCountString = failCount.getFirst().toString();
@@ -67,15 +75,25 @@ public class MarathonHandler extends AbstractHandler {
         var keyboard = new InlineKeyboardBuilder()
                 .row(createButtonByState(GOAL), createButtonByState(FAIL_GOAL));
 
-        if (existsReportToday) {
-            keyboard.row(createButtonByState(DELETE_REPORT));
-        } else if (LocalDateTime.now().isAfter(marathon.getDateStart())
-                && LocalDateTime.now().isBefore(marathon.getDateEnd())) {
-            keyboard.row(createButtonByState(REPORT));
-        }
+        String statusText;
 
-        if (!existsReportYesterday) {
-            keyboard.row(createButtonByState(REPORT_YESTERDAY));
+        if (isAfterEnd) {
+            statusText = "🏁 Марафон окончен! Спасибо за участие! 🏆";
+        } else if (isBeforeStart) {
+            statusText = "Марафон скоро начнётся! 🏁";
+        } else if (restDay) {
+            statusText = "Сегодня выходной от марафона 🌿 Отдых без отчёта!";
+        } else {
+            if (existsReportToday) {
+                keyboard.row(createButtonByState(DELETE_REPORT));
+            } else {
+                keyboard.row(createButtonByState(REPORT));
+            }
+            if (!existsReportYesterday) {
+                keyboard.row(createButtonByState(REPORT_YESTERDAY));
+            }
+
+            statusText = getStatusReport(user, existsReportToday, existsReportYesterday, todayDay);
         }
 
         keyboard.row(createButtonByState(START));
@@ -88,20 +106,13 @@ public class MarathonHandler extends AbstractHandler {
                 freeCount,
                 failCountString,
                 resultCash,
-                getStatusReport(user, existsReportToday, existsReportYesterday)
+                statusText
         );
     }
 
-    private String getStatusReport(UserEntity user, boolean existsReportToday, boolean existsReportYesterday) {
+    private String getStatusReport(UserEntity user, boolean existsReportToday,
+                                   boolean existsReportYesterday, LocalDate today) {
         var marathon = user.getMarathon();
-        LocalDate today = LocalDate.now();
-
-        if (today.isAfter(marathon.getDateEnd().toLocalDate())) {
-            return "Марафон окончен! 🏆";
-        }
-        if (today.isBefore(marathon.getDateStart().toLocalDate())) {
-            return "Марафон скоро начнется! 🏁";
-        }
 
         String todayStatus = "Отчет за сегодня: " + (existsReportToday ? "🟢" : "🔴");
         if (today.equals(marathon.getDateStart().toLocalDate())) {

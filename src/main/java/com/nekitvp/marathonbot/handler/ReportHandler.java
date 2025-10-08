@@ -6,17 +6,15 @@ import com.nekitvp.marathonbot.service.GoalService;
 import com.nekitvp.marathonbot.service.HistoryService;
 import com.nekitvp.marathonbot.service.MarathonService;
 import com.nekitvp.marathonbot.service.UserService;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static com.nekitvp.marathonbot.util.Constant.NOT_FOUND_MARATHON;
-import static com.nekitvp.marathonbot.util.Constant.NOT_STARTED_MARATHON;
-import static com.nekitvp.marathonbot.util.Constant.REPORT_ALREADY_SEND;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static com.nekitvp.marathonbot.util.Constant.*;
 
 @Component
 @RequiredArgsConstructor
@@ -46,6 +44,8 @@ public class ReportHandler extends AbstractHandler {
         var listGoal = goalService.getGoalByUser(message.getChatId());
         var user = userService.getUser(message.getChatId());
 
+        var day = LocalDateTime.now().toLocalDate();
+
         // проверка на существование марафона
         if (!userService.userHasAnyMarathon(message.getChatId())) {
             userService.updateUserState(message.getChatId(), StateBot.MARATHON);
@@ -61,8 +61,12 @@ public class ReportHandler extends AbstractHandler {
         // если отчет уже отправлен
         if (historyService.checkExistHistoryToday(message.getChatId())) {
             userService.updateUserState(message.getChatId(), StateBot.MARATHON);
-            var day = LocalDateTime.now().toLocalDate().toString();
-            return getDefaultMessage(message, REPORT_ALREADY_SEND, getKeyboardDefault(StateBot.MARATHON), day);
+            return getDefaultMessage(message, REPORT_ALREADY_SEND, getKeyboardDefault(StateBot.MARATHON), day.toString());
+        }
+
+        if (historyService.isRestDay(user.getMarathon(), day)) {
+            userService.updateUserState(message.getChatId(), StateBot.MARATHON);
+            return getDefaultMessage(message, REPORT_IN_REST_DAY, getKeyboardDefault(StateBot.MARATHON));
         }
 
         List<String> options = listGoal.stream()

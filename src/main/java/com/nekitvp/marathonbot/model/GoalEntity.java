@@ -1,10 +1,7 @@
 package com.nekitvp.marathonbot.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Getter
@@ -36,5 +33,8 @@ public class GoalEntity {
     @JoinColumn(name = "marathon_id", referencedColumnName = "id")
     private MarathonEntity marathon;
 
+    @Builder.Default
+    @Column(name = "asked_count")
+    private Integer askedCount = 0;
 }
 

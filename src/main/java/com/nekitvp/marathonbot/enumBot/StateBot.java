@@ -1,11 +1,11 @@
 package com.nekitvp.marathonbot.enumBot;
 
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
@@ -47,7 +47,7 @@ public enum StateBot {
             R — Relevant — значимыми для вас (так, чтобы вам было важно!)
             T — Time bound — ограниченными по времени (например, «хочу пробежать 5 км за 30 минут до конца месяца» 🕒)
             3️⃣ Ежедневный отчет
-            В конце каждого дня заполняем отчет по всем целям! 📊 Не забудьте поставить ✅ (выполнил) или 🚫 (не сделал). Отправляем отчет в бота до 23:59:59. Если поздно — штраф! ⏳
+            В конце каждого дня заполняем отчет по всем целям! 📊 Не забудьте поставить ✅️ (выполнил) или 🚫 (не сделал). Отправляем отчет в бота до 23:59:59. Если поздно — штраф! ⏳
                         
             4️⃣ Дополнительная цель — Отчет
             Запомните, отчет — это обязательная цель для всех. Если не отправил отчет, получаешь штраф! 😜

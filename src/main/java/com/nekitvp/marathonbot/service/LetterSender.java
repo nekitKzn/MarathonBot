@@ -2,22 +2,7 @@ package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.event.SendTelegramMessageEvent;
-import com.nekitvp.marathonbot.model.GoalEntity;
-import com.nekitvp.marathonbot.model.MarathonEntity;
-import com.nekitvp.marathonbot.model.MotivationEntity;
-import com.nekitvp.marathonbot.model.UserEntity;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
+import com.nekitvp.marathonbot.model.*;
 import com.nekitvp.marathonbot.util.MessageTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,36 +10,56 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
-import static com.nekitvp.marathonbot.util.Constant.FOGOT_MESSAGE_IN_GROUP;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.nekitvp.marathonbot.util.MarkdownUtil.escape;
 import static com.nekitvp.marathonbot.util.MessageTemplate.*;
-import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class LetterSender {
 
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final ApplicationEventPublisher publisher;
-    private final ReportReminderService reportReminderService;
+    private final TemplatePhraseService templatePhraseService;
 
     /* ---------------- base publish API ---------------- */
 
     private void publish(Long to, MessageTemplate template, StateBot button, Object... args) {
         String text = template.format(args);
-        log.info("Send message to {}: {}", to, text);
+        log.info("Send message to {}:\n {}", to, text);
         publisher.publishEvent(new SendTelegramMessageEvent(this, text, to, button));
     }
 
-    private void publish(Long to, MessageTemplate template, Object... args) {
+    public void publish(Long to, MessageTemplate template, Object... args) {
         publish(to, template, null, args);
     }
 
-    /** Свободный текст (оставляем для полностью произвольных сообщений, например мотивации из БД). */
-    public void publishText(Long to, String rawText) {
-        log.info("Send text to {}: {}", to, rawText);
-        publisher.publishEvent(new SendTelegramMessageEvent(this, rawText, to, null));
+    public void publishEscape(Long to, MessageTemplate template, Object... args) {
+        Object[] escaped = Arrays.stream(args)
+                .map(arg -> arg == null ? "" : escape(arg.toString()))
+                .toArray();
+
+        publish(to, template, null, escaped);
+    }
+
+    public void publishTextEscape(Long to, String rawText) {
+        publish(to, DEFAULT_TEMPLATE, null, escape(rawText));
+    }
+
+    public void publish(Long to, String rawText) {
+        publish(to, DEFAULT_TEMPLATE, null, rawText);
     }
 
     /* ---------------- high-level API ---------------- */
@@ -67,7 +72,7 @@ public class LetterSender {
         String content = buildReportContent(report);
 
         publish(user.getMarathon().getGroupId(), MessageTemplate.DAILY_REPORT,
-                name, today, time, content);
+                escape(name), escape(today), escape(time), content);
     }
 
     /** Отправляет отчёт за вчера. */
@@ -77,31 +82,52 @@ public class LetterSender {
         String content = buildReportContent(report);
 
         publish(user.getMarathon().getGroupId(), MessageTemplate.YESTERDAY_REPORT,
-                name, yesterday, content);
+                escape(name), escape(yesterday), content);
     }
 
     /** Личное напоминание тем, кто не поставил отчёт (текст даёт сервис фраз). */
-    public void sendWhoDidNotSetReport(UserEntity user) {
-        var phrase = reportReminderService.getRandomPhrase();
-        publish(user.getTelegramId(), REMINDER_REPORT, StateBot.REPORT,
-                String.format(phrase, user.getTelegramFirstName()));
+    public void notifyUsersWithoutTodayReport(UserEntity user) {
+        var phrase = templatePhraseService.getRandomMissedToday();
+        var text = escape(String.format(phrase, user.getTelegramFirstName()));
+        publish(user.getTelegramId(), DEFAULT_TEMPLATE, StateBot.REPORT, text);
     }
 
-    /** Сообщение о провальном отчёте: личное + в группу с перечнем целей. */
-    public void sendBadReport(UserEntity user, List<GoalEntity> goals) {
-        // личное
-        publish(user.getTelegramId(), MessageTemplate.BAD_REPORT_PRIVATE, StateBot.REPORT_YESTERDAY);
+    /**
+     * Личное напоминание тем, кто не поставил отчёт вчера (текст даёт сервис фраз).
+     */
+    public void notifyUsersWithoutYesterdayReport(UserEntity user) {
+        var phrase = templatePhraseService.getRandomMissedYesterday();
+        var text = escape(String.format(phrase, user.getTelegramFirstName()));
+        publish(user.getTelegramId(), DEFAULT_TEMPLATE, StateBot.REPORT_YESTERDAY, text);
+    }
 
-        // групповой отчёт
+    /**
+     * Сообщение о провальном отчёте: личное + в группу
+     */
+    public void sendBadReport(UserEntity user) {
+        publish(user.getTelegramId(), MessageTemplate.BAD_REPORT_ONE_DAY_PRIVATE, StateBot.REPORT_YESTERDAY);
+
         String name = user.getTelegramFirstName();
-        LocalDate date = LocalDateTime.now().minusHours(12).toLocalDate();
+        LocalDate date = LocalDateTime.now().minusDays(1).toLocalDate();
 
-        publish(user.getMarathon().getGroupId(), MessageTemplate.BAD_REPORT_GROUP, name, date);
+        publishEscape(user.getMarathon().getGroupId(), MessageTemplate.BAD_REPORT_ONE_DAY_GROUP, name, date);
+    }
+
+    /**
+     * Сообщение о провальном отчёте: личное + в группу
+     */
+    public void sendBadReportFinal(UserEntity user, List<GoalEntity> goals) {
+        publish(user.getTelegramId(), BAD_REPORT_FINAL_DAY_PRIVATE);
+
+        String name = user.getTelegramFirstName();
+        LocalDate date = user.getMarathon().getDateEnd().toLocalDate();
+
+        publishEscape(user.getMarathon().getGroupId(), BAD_REPORT_FINAL_DAY_GROUP, name, date, goals.size());
     }
 
     /** Мотивация (берём текст целиком из БД/админки). */
     public void sendMotivation(MotivationEntity motivation) {
-        publishText(motivation.getMarathon().getGroupId(), motivation.getText());
+        publishTextEscape(motivation.getMarathon().getGroupId(), motivation.getText());
     }
 
     /** Сводная статистика по марафону. */
@@ -123,13 +149,15 @@ public class LetterSender {
                 currentDay, daysLeft, ratingBlock, marathon.getFreeFailCount(), cashString);
     }
 
-    /** Сообщение в группы о забывших отправить отчёт. */
-    public void sendForgotMessageInGroup(Map<Long, List<UserEntity>> map) {
+    /**
+     * Сообщение в группы о забывших отправить отчёт
+     */
+    public void notifyGroupWithoutReport(Map<Long, List<UserEntity>> map, MessageTemplate template) {
         map.forEach((groupId, users) -> {
             String names = users.stream()
-                    .map(UserEntity::getTelegramFirstName)
-                    .collect(Collectors.joining("\n"));
-            publish(groupId, MessageTemplate.FORGOT_MESSAGE_GROUP, names);
+                    .map(user -> escape(user.getTelegramFirstName()))
+                    .collect(Collectors.joining("\n>"));
+            publish(groupId, template, names);
         });
     }
 
@@ -140,7 +168,7 @@ public class LetterSender {
         StringBuilder contentBuilder = new StringBuilder();
         for (Pair<String, Boolean> entry : report) {
             String result = entry.getSecond() ? "✅" : "❌";
-            contentBuilder.append(result).append(" - ").append(entry.getFirst()).append("\n");
+            contentBuilder.append(">").append(result).append(" ").append(escape(entry.getFirst())).append("\n");
         }
         return contentBuilder.toString();
     }
@@ -156,14 +184,14 @@ public class LetterSender {
 
         StringBuilder rating = new StringBuilder();
         for (Map.Entry<String, Pair<Long, Long>> e : sorted) {
-            String name = e.getKey();
+            String name = escape(e.getKey());
             long crosses = e.getValue().getFirst();
             long maxCrosses = e.getValue().getSecond();
 
             if (crosses == maxCrosses) {
                 rating.append(String.format("%d : %s%n", crosses, name));
             } else {
-                rating.append(String.format("%d (%d): %s%n", crosses, maxCrosses, name));
+                rating.append(String.format("%d \\(%d\\): %s%n", crosses, maxCrosses, name));
             }
 
             if (crosses > freeFailCount) {
@@ -173,8 +201,19 @@ public class LetterSender {
                 cashMax += (maxCrosses - freeFailCount) * 100;
             }
         }
-        String cashString = (cash == cashMax) ? String.valueOf(cash) : String.format("%d (%d)", cash, cashMax);
+        String cashString = (cash == cashMax) ? String.valueOf(cash) : String.format("%d \\(%d\\)", cash, cashMax);
         return new PenaltyCalc(rating.toString().trim(), cashString);
+    }
+
+    public void sendRedReportWarning(UserEntity user, List<HistoryEntity> histories) {
+        var marathon = user.getMarathon();
+        var userName = escape(user.getTelegramFirstName());
+        var dayBeforeYesterday = escape(LocalDate.now().minusDays(2));
+        String failedGoalsList = histories.stream()
+                .map(h -> ">❌ " + escape(h.getGoal().getName()))
+                .collect(Collectors.joining("\n"));
+        publish(marathon.getGroupId(), BAD_REPORT_TWO_DAYS_GROUP, userName, dayBeforeYesterday, failedGoalsList);
+        publish(user.getTelegramId(), BAD_REPORT_TWO_DAYS_PRIVATE);
     }
 
     private record PenaltyCalc(String ratingText, String cashString) {}

@@ -1,14 +1,10 @@
 package com.nekitvp.marathonbot.util;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import lombok.experimental.UtilityClass;
-
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import org.springframework.data.util.Pair;
+
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 
 @UtilityClass
 public class DateTimeUtil {
@@ -66,5 +62,14 @@ public class DateTimeUtil {
      */
     public static Pair<LocalDateTime, LocalDateTime> getYesterdayRange() {
         return getDayRange(LocalDate.now().minusDays(1));
+    }
+
+    /**
+     * Возвращает диапазон для позавчерашнего дня.
+     *
+     * @return пара (начало позавчерашнего дня, конец позавчерашнего дня)
+     */
+    public static Pair<LocalDateTime, LocalDateTime> getDayBeforeYesterdayRange() {
+        return getDayRange(LocalDate.now().minusDays(2));
     }
 }

@@ -3,26 +3,27 @@ package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.model.HistoryEntity;
+import com.nekitvp.marathonbot.model.MarathonEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.HistoryRepository;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.nekitvp.marathonbot.util.DateTimeUtil.getTodayRange;
-import static com.nekitvp.marathonbot.util.DateTimeUtil.getYesterdayRange;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.nekitvp.marathonbot.util.DateTimeUtil.*;
+import static com.nekitvp.marathonbot.util.MessageTemplate.NOTIFY_GROUP_WITHOUT_REPORT_TODAY;
+import static com.nekitvp.marathonbot.util.MessageTemplate.NOTIFY_GROUP_WITHOUT_REPORT_YESTERDAY;
 import static java.time.LocalDateTime.now;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HistoryService {
@@ -41,6 +42,9 @@ public class HistoryService {
         var goals = goalService.getGoalByUser(telegramId);
         List<Pair<String, Boolean>> result = new ArrayList<>();
         LocalDateTime currentTime = now();
+
+        goals.sort(Comparator.comparingInt(g -> g.getPosition() == 0 ?
+                Integer.MAX_VALUE : g.getPosition()));
 
         for (var goal : goals) {
             boolean completed;
@@ -69,6 +73,9 @@ public class HistoryService {
         var histories = historyRepository.findByTelegramIdAndCreatedAtBetween(
                 telegramId, yesterdayRange.getFirst(), yesterdayRange.getSecond()
         );
+
+        histories.sort(Comparator.comparingInt(history -> history.getGoal().getPosition() == 0 ?
+                Integer.MAX_VALUE : history.getGoal().getPosition()));
 
         for (var history : histories) {
             var goal = history.getGoal();
@@ -111,35 +118,56 @@ public class HistoryService {
      * Отправляем напоминание тем, кто не отправил отчет, а также в группу
      */
     @Transactional(readOnly = true)
-    public void sendWhoDidNotSetReport() {
-        Set<UserEntity> userSet = new HashSet<>();
+    public void notifyUsersWithoutTodayReport() {
+        Set<UserEntity> userSetForToday = new HashSet<>();
+        Set<UserEntity> userSetForYestarday = new HashSet<>();
+        LocalDate today = LocalDate.now();
 
         userService.getUsersWhoHasActiveMarathon().forEach(user -> {
+            MarathonEntity marathon = user.getMarathon();
+            if (checkExistNullHistoryYesterday(user.getTelegramId())) {
+                userSetForYestarday.add(user);
+                letterSender.notifyUsersWithoutYesterdayReport(user);
+            }
+            if (isRestDay(marathon, today)) {
+                log.info("Skip reminder for {} — rest day in marathon {}", user.getTelegramFirstName(), marathon.getName());
+                return;
+            }
             if (!checkExistHistoryToday(user.getTelegramId())) {
-                letterSender.sendWhoDidNotSetReport(user);
-                userSet.add(user);
+                letterSender.notifyUsersWithoutTodayReport(user);
+                userSetForToday.add(user);
             }
         });
 
-        Map<Long, List<UserEntity>> map = userSet.stream()
+        Map<Long, List<UserEntity>> mapForToday = userSetForToday.stream()
+                .collect(Collectors.groupingBy(user -> user.getMarathon().getGroupId()));
+        Map<Long, List<UserEntity>> mapForYesterday = userSetForYestarday.stream()
                 .collect(Collectors.groupingBy(user -> user.getMarathon().getGroupId()));
 
-        letterSender.sendForgotMessageInGroup(map);
+        letterSender.notifyGroupWithoutReport(mapForToday, NOTIFY_GROUP_WITHOUT_REPORT_TODAY);
+        letterSender.notifyGroupWithoutReport(mapForYesterday, NOTIFY_GROUP_WITHOUT_REPORT_YESTERDAY);
     }
 
     /**
      * Создаем отчеты за тех, кто не отправил за день
      */
     @Transactional
-    public void createHistoryWhoForgot() {
+    public void createHistoryWhoForgotOneday() {
         Pair<LocalDateTime, LocalDateTime> yesterdayRange = getYesterdayRange();
         var timeReport = yesterdayRange.getFirst().plusHours(12);
+        var today = LocalDate.now();
+
         List<HistoryEntity> historiesToSave = new ArrayList<>();
 
         userService.getUsersWhoHasActiveMarathon()
                 .forEach(user -> {
-                    if (user.getMarathon().getDateStart().toLocalDate()
-                            .isAfter(LocalDate.now().minusDays(1))) {
+                    MarathonEntity marathon = user.getMarathon();
+                    if (marathon.getDateStart().toLocalDate()
+                            .isAfter(today.minusDays(1))) {
+                        return;
+                    }
+                    if (isRestDay(marathon, yesterdayRange.getFirst().toLocalDate())) {
+                        log.info("Skip report creation for {} (weekend in marathon {})", user.getTelegramFirstName(), marathon.getName());
                         return;
                     }
 
@@ -161,11 +189,88 @@ public class HistoryService {
                                 .orElseThrow(() -> new RuntimeException("Goal Report not found"));
                         var history = createHistoryGoal(goalReport, false, timeReport);
                         historiesToSave.add(history);
-                        letterSender.sendBadReport(user, goals);
+                        letterSender.sendBadReport(user);
                     }
                 });
         historyRepository.saveAll(historiesToSave);
     }
+
+    /**
+     * Через 24 часа после незаполненного отчета (done = null) — проставляем крестики (done = false).
+     * Проверяем всех участников, у которых позавчера был активен марафон (даже если сегодня он уже завершен).
+     */
+    @Transactional
+    public void updateHistoryWhoForgotTwoDays() {
+        Pair<LocalDateTime, LocalDateTime> dayBeforeYesterdayRange = getDayBeforeYesterdayRange();
+        var today = LocalDate.now();
+        LocalDate dayBeforeYesterday = today.minusDays(2);
+
+        List<HistoryEntity> unfilledHistories = historyRepository.findAllByCreatedAtBetweenAndDoneIsNull(
+                dayBeforeYesterdayRange.getFirst(),
+                dayBeforeYesterdayRange.getSecond()
+        );
+
+        if (unfilledHistories.isEmpty()) {
+            log.info("Нет красных отчетов за {}", dayBeforeYesterday);
+            return;
+        }
+        Map<Long, List<HistoryEntity>> historiesByUser = unfilledHistories.stream()
+                .collect(Collectors.groupingBy(h -> h.getGoal().getUserId()));
+
+        historiesByUser.forEach((telegramId, histories) -> {
+            UserEntity user = userService.getUser(telegramId);
+            MarathonEntity marathon = user.getMarathon();
+
+            LocalDate start = marathon.getDateStart().toLocalDate();
+            LocalDate end = marathon.getDateEnd().toLocalDate();
+
+            if (dayBeforeYesterday.isBefore(start) || dayBeforeYesterday.isAfter(end)) {
+                return;
+            }
+
+            if (start.isAfter(dayBeforeYesterday)) {
+                return;
+            }
+
+            histories.forEach(h -> h.setDone(false));
+            historyRepository.saveAll(histories);
+
+            histories.sort(Comparator.comparingInt(history -> history.getGoal().getPosition() == 0 ?
+                    Integer.MAX_VALUE : history.getGoal().getPosition()));
+
+            letterSender.sendRedReportWarning(user, histories);
+        });
+    }
+
+
+    @Transactional
+    public void createFinalDayReports(MarathonEntity marathon) {
+        Pair<LocalDateTime, LocalDateTime> yesterdayRange = getYesterdayRange();
+        LocalDateTime timeReport = yesterdayRange.getFirst().plusHours(12);
+        List<HistoryEntity> historiesToSave = new ArrayList<>();
+
+        List<UserEntity> users = userService.getUsersByMarathonId(marathon.getId());
+
+        for (UserEntity user : users) {
+            boolean reportExists = historyRepository.existsByTelegramIdAndCreatedAtBetween(
+                    user.getTelegramId(),
+                    yesterdayRange.getFirst(),
+                    yesterdayRange.getSecond()
+            );
+
+            if (!reportExists) {
+                List<GoalEntity> goals = goalService.getGoalByUser(user.getTelegramId());
+
+                goals.forEach(goal -> {
+                    var history = createHistoryGoal(goal, false, timeReport);
+                    historiesToSave.add(history);
+                });
+                letterSender.sendBadReportFinal(user, goals);
+            }
+        }
+        historyRepository.saveAll(historiesToSave);
+    }
+
 
     /**
      * Подсчитывает количество не выполненных целей за марафон у пользователя
@@ -210,5 +315,14 @@ public class HistoryService {
                 todayRange.getSecond());
 
         historyRepository.deleteAll(histories);
+    }
+
+    /**
+     * Проверка выходного дня
+     */
+    public boolean isRestDay(MarathonEntity marathon, LocalDate localDate) {
+        DayOfWeek day = localDate.getDayOfWeek();
+        return (day == DayOfWeek.SATURDAY && Boolean.TRUE.equals(marathon.getRestOnSaturday()))
+                || (day == DayOfWeek.SUNDAY && Boolean.TRUE.equals(marathon.getRestOnSunday()));
     }
 }

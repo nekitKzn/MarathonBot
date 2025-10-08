@@ -3,14 +3,14 @@ package com.nekitvp.marathonbot.service;
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.UserRepository;
-import java.time.LocalDateTime;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 
 @Service
@@ -86,10 +86,11 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserEntity> getUsersWhoHasActiveMarathon() {
+        var todayTime = LocalDateTime.now();
         return userRepository.findAll().stream()
                 .filter(user -> Objects.nonNull(user.getMarathonId()))
-                .filter(user -> LocalDateTime.now().isAfter(user.getMarathon().getDateStart()))
-                .filter(user -> LocalDateTime.now().isBefore(user.getMarathon().getDateEnd()))
+                .filter(user -> todayTime.isAfter(user.getMarathon().getDateStart()))
+                .filter(user -> todayTime.isBefore(user.getMarathon().getDateEnd()))
                 .toList();
     }
 

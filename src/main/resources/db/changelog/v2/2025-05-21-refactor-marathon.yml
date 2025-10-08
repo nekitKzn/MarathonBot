@@ -73,3 +73,41 @@ databaseChangeLog:
             referencedColumnNames: telegram_id
             constraintName: fk_marathon_manager_user
             onDelete: CASCADE
+  - changeSet:
+      id: add-weekend-settings-to-marathon
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: marathon
+            columns:
+              - column:
+                  name: rest_on_saturday
+                  type: boolean
+                  defaultValueBoolean: false
+              - column:
+                  name: rest_on_sunday
+                  type: boolean
+                  defaultValueBoolean: false
+  - changeSet:
+      id: add-evening-questions-flag-to-marathon
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: marathon
+            columns:
+              - column:
+                  name: evening_questions_enabled
+                  type: boolean
+                  defaultValueBoolean: false
+  - changeSet:
+      id: add-asked-count-to-goal
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: goal
+            columns:
+              - column:
+                  name: asked_count
+                  type: int
+                  defaultValueNumeric: 0
+

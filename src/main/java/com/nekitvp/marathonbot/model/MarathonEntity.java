@@ -2,17 +2,12 @@ package com.nekitvp.marathonbot.model;
 
 
 import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
@@ -56,4 +51,16 @@ public class MarathonEntity {
 
     @ManyToMany(mappedBy = "managedMarathons")
     private Set<UserEntity> managers = new HashSet<>();
+
+    @Builder.Default
+    @Column(name = "rest_on_saturday")
+    private Boolean restOnSaturday = false;
+
+    @Builder.Default
+    @Column(name = "rest_on_sunday")
+    private Boolean restOnSunday = false;
+
+    @Builder.Default
+    @Column(name = "evening_questions_enabled")
+    private Boolean eveningQuestionsEnabled = false;
 }

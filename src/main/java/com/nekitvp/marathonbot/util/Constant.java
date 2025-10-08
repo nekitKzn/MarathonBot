@@ -23,6 +23,10 @@ public class Constant {
             Откинься, расслабься и готовься к новым подвигам завтра! 💪😎
             """;
 
+    public static final String REPORT_IN_REST_DAY = """
+            🚀 Сегодня выходной, можешь отдыхать!
+            """;
+
     public static final String TEXT_IF_HAS_REPORT_YESTERDAY = """
             🤫 Псс... Вчера ты уже отправил отчёт, так что можно смело расслабиться — всё идёт по плану!
             """;

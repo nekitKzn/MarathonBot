@@ -30,7 +30,7 @@ public class LetterToMarathoneSendedHandler extends AbstractHandler {
 
         var marathonId = marathonService.getIdSelectMarathon();
 
-        letterSender.publishText(marathonId, message.getText());
+        letterSender.publishTextEscape(marathonId, message.getText());
         userService.updateUserState(message.getChatId(), StateBot.ADMIN_MAIN);
 
         return getDefaultMessage(message, getKeyboardDefault(StateBot.ADMIN_MAIN));

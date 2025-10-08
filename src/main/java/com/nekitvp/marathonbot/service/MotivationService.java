@@ -3,11 +3,12 @@ package com.nekitvp.marathonbot.service;
 import com.nekitvp.marathonbot.model.MarathonEntity;
 import com.nekitvp.marathonbot.model.MotivationEntity;
 import com.nekitvp.marathonbot.repository.MotivationRepository;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +20,7 @@ public class MotivationService {
 
     @Transactional
     public void sendRandomMotivation() {
-        List<MarathonEntity> listMarathonForMotivation = marathonService.getAllMarathonesForMotivate();
+        List<MarathonEntity> listMarathonForMotivation = marathonService.getAllMarathonsForMotivate();
         listMarathonForMotivation.forEach(marathon -> {
 
             Optional<MotivationEntity> randomMotivation = motivationRepository.findRandomByMarathonIdAndIsSendFalse(marathon.getId());

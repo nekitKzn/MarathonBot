@@ -1,10 +1,6 @@
 package com.nekitvp.marathonbot.event;
 
 import com.nekitvp.marathonbot.bot.TelegramBot;
-
-import com.nekitvp.marathonbot.enumBot.StateBot;
-import com.nekitvp.marathonbot.handler.Handler;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -15,6 +11,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.util.List;
 
 import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
@@ -36,14 +34,13 @@ public class ServiceEventListener {
     }
 
     @Retryable(
-            include = {TelegramApiException.class},
-            maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
     private void sendTelegramMessage(SendTelegramMessageEvent event) throws TelegramApiException {
         var send = SendMessage.builder()
                 .text(event.getText())
                 .chatId(event.getChatId())
+                .parseMode("MarkdownV2")
                 .build();
 
         if (event.getButton() != null) {
