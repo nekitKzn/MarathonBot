@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: /db/changelog/v2/2025-05-21-refactor-marathon.yml
+  - include:
+      file: /db/changelog/v2/2025-10-09-add-setting-pay-in-marathon.yml

@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-setting-pay-in-marathon
+      author: lobanov_nikita
+      changes:
+        - addColumn:
+            tableName: marathon
+            columns:
+              - column:
+                  name: penalty_amount
+                  type: bigint
+                  defaultValueNumeric: 100

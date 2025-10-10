@@ -141,7 +141,7 @@ public class LetterSender {
         long daysLeft = Math.max(0, totalDays - currentDay);
 
         // Рейтинг и касса
-        var calc = buildPenaltyRatingBlock(mapUsers, marathon.getFreeFailCount());
+        var calc = buildPenaltyRatingBlock(mapUsers, marathon);
         String ratingBlock = calc.ratingText();
         String cashString = calc.cashString();
 
@@ -156,7 +156,7 @@ public class LetterSender {
         map.forEach((groupId, users) -> {
             String names = users.stream()
                     .map(user -> escape(user.getTelegramFirstName()))
-                    .collect(Collectors.joining("\n>"));
+                    .collect(Collectors.joining("\n• "));
             publish(groupId, template, names);
         });
     }
@@ -174,13 +174,15 @@ public class LetterSender {
     }
 
     /** Построение рейтинга штрафов и вычисление кассы (текущая и максимальная). */
-    private PenaltyCalc buildPenaltyRatingBlock(Map<String, Pair<Long, Long>> mapUsers, int freeFailCount) {
+    private PenaltyCalc buildPenaltyRatingBlock(Map<String, Pair<Long, Long>> mapUsers, MarathonEntity marathon) {
         List<Map.Entry<String, Pair<Long, Long>>> sorted = mapUsers.entrySet().stream()
                 .sorted(Comparator.comparingLong(e -> e.getValue().getFirst()))
                 .toList();
 
         long cash = 0;
         long cashMax = 0;
+        var freeFailCount = marathon.getFreeFailCount();
+        var penaltyAmount = marathon.getPenaltyAmount();
 
         StringBuilder rating = new StringBuilder();
         for (Map.Entry<String, Pair<Long, Long>> e : sorted) {
@@ -195,10 +197,10 @@ public class LetterSender {
             }
 
             if (crosses > freeFailCount) {
-                cash += (crosses - freeFailCount) * 100;
+                cash += (crosses - freeFailCount) * penaltyAmount;
             }
             if (maxCrosses > freeFailCount) {
-                cashMax += (maxCrosses - freeFailCount) * 100;
+                cashMax += (maxCrosses - freeFailCount) * penaltyAmount;
             }
         }
         String cashString = (cash == cashMax) ? String.valueOf(cash) : String.format("%d \\(%d\\)", cash, cashMax);

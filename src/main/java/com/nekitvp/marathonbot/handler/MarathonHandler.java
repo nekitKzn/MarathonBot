@@ -63,12 +63,12 @@ public class MarathonHandler extends AbstractHandler {
 
         if (Objects.equals(failCount.getFirst(), failCount.getSecond())) {
             failCountString = failCount.getFirst().toString();
-            long cash = calculateCash(failCount.getFirst(), freeCount);
+            long cash = calculateCash(failCount.getFirst(), freeCount, marathon.getPenaltyAmount());
             resultCash = String.valueOf(cash);
         } else {
             failCountString = String.format("%d (%d)", failCount.getFirst(), failCount.getSecond());
-            long cash = calculateCash(failCount.getFirst(), freeCount);
-            long cashMaybe = calculateCash(failCount.getSecond(), freeCount);
+            long cash = calculateCash(failCount.getFirst(), freeCount, marathon.getPenaltyAmount());
+            long cashMaybe = calculateCash(failCount.getSecond(), freeCount, marathon.getPenaltyAmount());
             resultCash = String.format("%s (%s)", cash, cashMaybe);
         }
 
@@ -123,8 +123,8 @@ public class MarathonHandler extends AbstractHandler {
         return todayStatus + "\n" + yesterdayStatus;
     }
 
-    private long calculateCash(long fails, int freeCount) {
-        return fails > freeCount ? (fails - freeCount) * 100L : 0L;
+    private long calculateCash(long fails, int freeCount, int penaltyAmount) {
+        return fails > freeCount ? (fails - freeCount) * penaltyAmount : 0L;
     }
 }
 

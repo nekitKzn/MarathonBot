@@ -63,4 +63,8 @@ public class MarathonEntity {
     @Builder.Default
     @Column(name = "evening_questions_enabled")
     private Boolean eveningQuestionsEnabled = false;
+
+    @Builder.Default
+    @Column(name = "penalty_amount")
+    private Integer penaltyAmount = 100;
 }
