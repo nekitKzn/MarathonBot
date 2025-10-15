@@ -36,4 +36,12 @@ out/
 ### VS Code ###
 .vscode/
 
+# env-файлы
 .env
+.env.*
+
+# локальные конфиги
+src/main/resources/application-local.yml
+
+# примеры можно коммитить
+!src/main/resources/application-local.example.yml
