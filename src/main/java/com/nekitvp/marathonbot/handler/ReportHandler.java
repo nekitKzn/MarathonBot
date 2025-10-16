@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.nekitvp.marathonbot.util.Constant.*;
+import static com.nekitvp.marathonbot.util.DateTimeUtil.isRestDay;
 
 @Component
 @RequiredArgsConstructor
@@ -64,7 +65,7 @@ public class ReportHandler extends AbstractHandler {
             return getDefaultMessage(message, REPORT_ALREADY_SEND, getKeyboardDefault(StateBot.MARATHON), day.toString());
         }
 
-        if (historyService.isRestDay(user.getMarathon(), day)) {
+        if (isRestDay(user.getMarathon(), day)) {
             userService.updateUserState(message.getChatId(), StateBot.MARATHON);
             return getDefaultMessage(message, REPORT_IN_REST_DAY, getKeyboardDefault(StateBot.MARATHON));
         }

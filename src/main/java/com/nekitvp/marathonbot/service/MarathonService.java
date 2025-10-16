@@ -1,5 +1,6 @@
 package com.nekitvp.marathonbot.service;
 
+import com.nekitvp.marathonbot.integration.yandex.service.YandexGptService;
 import com.nekitvp.marathonbot.model.MarathonEntity;
 import com.nekitvp.marathonbot.model.UserEntity;
 import com.nekitvp.marathonbot.repository.MarathonRepository;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.nekitvp.marathonbot.util.DateTimeUtil.isRestDay;
 import static com.nekitvp.marathonbot.util.MessageTemplate.*;
 
 @Slf4j
@@ -29,6 +31,7 @@ public class MarathonService {
     private final HistoryService historyService;
     private final LetterSender letterSender;
     private final UserService userService;
+    private final YandexGptService yandexGptService;
 
     @Transactional
     public void addMarathon(String name, Long groupId) {
@@ -110,13 +113,22 @@ public class MarathonService {
     }
 
     private void sendStatisticByMarathon(MarathonEntity marathon) {
+        Map<String, Pair<Long, Long>> mapUsers = getResultPersonMap(marathon);
+        letterSender.sendStatistics(marathon, mapUsers);
+    }
+
+    private String sendFinalStatisticByMarathon(MarathonEntity marathon) {
+        Map<String, Pair<Long, Long>> mapUsers = getResultPersonMap(marathon);
+        return letterSender.sendFinalStatistics(marathon, mapUsers);
+    }
+
+    private Map<String, Pair<Long, Long>> getResultPersonMap(MarathonEntity marathon) {
         var users = userService.getUsersByMarathonId(marathon.getId());
-        Map<String, Pair<Long, Long>> mapUsers = users.stream()
+        return users.stream()
                 .collect(Collectors.toMap(
                         UserEntity::getTelegramFirstName,
                         historyService::getCountFailByUserInMarathon
                 ));
-        letterSender.sendStatistics(marathon, mapUsers);
     }
 
     /**
@@ -170,14 +182,14 @@ public class MarathonService {
         marathons.forEach(m -> {
             log.info("Finishing marathon: {}", m.getName());
 
-            if (!historyService.isRestDay(m, today.minusDays(1))) {
+            if (!isRestDay(m, today.minusDays(1))) {
                 historyService.createFinalDayReports(m);
             }
 
-            // todo здесь подкрутить результаты, желательно с ИИ, выделить в отдельный шедуллер
-//            sendStatisticByMarathon(m);
-
             letterSender.publishEscape(m.getGroupId(), MARATHON_FINISH, m.getName());
+
+            sendFinalStatisticByMarathon(m);
+            ;
 
             if (m.getManagers() != null) {
                 m.getManagers().forEach(manager ->
@@ -244,7 +256,7 @@ public class MarathonService {
         LocalDate today = LocalDate.now();
 
         List<MarathonEntity> marathons = getPlayingMarathone().stream()
-                .filter(m -> historyService.isRestDay(m, today))
+                .filter(m -> isRestDay(m, today))
                 .toList();
 
         if (marathons.isEmpty()) return;

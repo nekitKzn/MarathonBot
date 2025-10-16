@@ -2,6 +2,7 @@ package com.nekitvp.marathonbot.service;
 
 import com.nekitvp.marathonbot.enumBot.StateBot;
 import com.nekitvp.marathonbot.event.SendTelegramMessageEvent;
+import com.nekitvp.marathonbot.integration.yandex.service.YandexGptService;
 import com.nekitvp.marathonbot.model.*;
 import com.nekitvp.marathonbot.util.MessageTemplate;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class LetterSender {
 
     private final ApplicationEventPublisher publisher;
     private final TemplatePhraseService templatePhraseService;
+    private final YandexGptService yandexGptService;
 
     /* ---------------- base publish API ---------------- */
 
@@ -147,6 +149,18 @@ public class LetterSender {
 
         publish(marathon.getGroupId(), MessageTemplate.STATISTICS,
                 currentDay, daysLeft, ratingBlock, marathon.getFreeFailCount(), cashString);
+    }
+
+    /**
+     * Сводная финальаня статистика по марафону.
+     */
+    public String sendFinalStatistics(MarathonEntity marathon, Map<String, Pair<Long, Long>> mapUsers) {
+        var calc = buildPenaltyRatingBlock(mapUsers, marathon);
+        String ratingBlock = calc.ratingText();
+        String cashString = calc.cashString();
+        String result = String.format(FINAL_STATISTICS.getText(), ratingBlock, marathon.getFreeFailCount(), cashString);
+        publish(marathon.getGroupId(), result);
+        return result;
     }
 
     /**

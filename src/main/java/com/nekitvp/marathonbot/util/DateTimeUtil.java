@@ -1,5 +1,6 @@
 package com.nekitvp.marathonbot.util;
 
+import com.nekitvp.marathonbot.model.MarathonEntity;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.util.Pair;
 
@@ -71,5 +72,14 @@ public class DateTimeUtil {
      */
     public static Pair<LocalDateTime, LocalDateTime> getDayBeforeYesterdayRange() {
         return getDayRange(LocalDate.now().minusDays(2));
+    }
+
+    /**
+     * Проверка выходного дня
+     */
+    public static boolean isRestDay(MarathonEntity marathon, LocalDate localDate) {
+        DayOfWeek day = localDate.getDayOfWeek();
+        return (day == DayOfWeek.SATURDAY && Boolean.TRUE.equals(marathon.getRestOnSaturday()))
+                || (day == DayOfWeek.SUNDAY && Boolean.TRUE.equals(marathon.getRestOnSunday()));
     }
 }

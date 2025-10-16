@@ -17,6 +17,7 @@ import java.util.Objects;
 
 import static com.nekitvp.marathonbot.enumBot.StateBot.*;
 import static com.nekitvp.marathonbot.util.Constant.NOT_FOUND_MARATHON;
+import static com.nekitvp.marathonbot.util.DateTimeUtil.isRestDay;
 import static com.nekitvp.marathonbot.util.TelegramUtil.createButtonByState;
 
 @Component
@@ -57,7 +58,8 @@ public class MarathonHandler extends AbstractHandler {
         LocalDateTime todayTime = LocalDateTime.now();
         LocalDate todayDay = todayTime.toLocalDate();
 
-        boolean restDay = historyService.isRestDay(marathon, todayDay);
+        boolean restDay = isRestDay(marathon, todayDay);
+        boolean restDayYesterday = isRestDay(marathon, todayDay.minusDays(1));
         boolean isBeforeStart = todayTime.isBefore(marathon.getDateStart());
         boolean isAfterEnd = todayTime.isAfter(marathon.getDateEnd());
 
@@ -93,7 +95,7 @@ public class MarathonHandler extends AbstractHandler {
                 keyboard.row(createButtonByState(REPORT_YESTERDAY));
             }
 
-            statusText = getStatusReport(user, existsReportToday, existsReportYesterday, todayDay);
+            statusText = getStatusReport(user, existsReportToday, existsReportYesterday, restDayYesterday, todayDay);
         }
 
         keyboard.row(createButtonByState(START));
@@ -111,11 +113,11 @@ public class MarathonHandler extends AbstractHandler {
     }
 
     private String getStatusReport(UserEntity user, boolean existsReportToday,
-                                   boolean existsReportYesterday, LocalDate today) {
+                                   boolean existsReportYesterday, boolean restDayYesterday, LocalDate today) {
         var marathon = user.getMarathon();
 
         String todayStatus = "Отчет за сегодня: " + (existsReportToday ? "🟢" : "🔴");
-        if (today.equals(marathon.getDateStart().toLocalDate())) {
+        if (today.equals(marathon.getDateStart().toLocalDate()) || restDayYesterday) {
             return todayStatus;
         }
 

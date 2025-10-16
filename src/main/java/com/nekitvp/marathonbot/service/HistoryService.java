@@ -12,7 +12,6 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -315,14 +314,5 @@ public class HistoryService {
                 todayRange.getSecond());
 
         historyRepository.deleteAll(histories);
-    }
-
-    /**
-     * Проверка выходного дня
-     */
-    public boolean isRestDay(MarathonEntity marathon, LocalDate localDate) {
-        DayOfWeek day = localDate.getDayOfWeek();
-        return (day == DayOfWeek.SATURDAY && Boolean.TRUE.equals(marathon.getRestOnSaturday()))
-                || (day == DayOfWeek.SUNDAY && Boolean.TRUE.equals(marathon.getRestOnSunday()));
     }
 }

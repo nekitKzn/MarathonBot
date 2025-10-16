@@ -21,5 +21,9 @@ logging:
   file:
     name: /app/logs/app.log
 yandex:
+  base-url: https://llm.api.cloud.yandex.net/v1
   api-key: ${YANDEX_API_KEY}
   folder-id: ${YANDEX_FOLDER_ID}
+  model: yandexgpt-lite/latest
+  temperature: 0.3
+  max-tokens: 800

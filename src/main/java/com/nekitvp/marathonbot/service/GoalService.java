@@ -4,14 +4,19 @@ import com.nekitvp.marathonbot.model.GoalEntity;
 import com.nekitvp.marathonbot.repository.GoalRepository;
 import com.nekitvp.marathonbot.util.MarkdownUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.nekitvp.marathonbot.util.DateTimeUtil.isRestDay;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GoalService {
@@ -38,9 +43,16 @@ public class GoalService {
 
     @Transactional
     public void sendEveningQuestion() {
+        LocalDate today = LocalDate.now();
         List<GoalEntity> listForSave = new ArrayList<>();
         marathonService.getAllMarathonsForEveningQuestion()
                 .forEach(marathon -> {
+
+                    if (isRestDay(marathon, today)) {
+                        log.info("Skip Question, rest day in marathon {}", marathon.getName());
+                        return;
+                    }
+
                     GoalEntity goal = goalRepository.findGoalForEveningQuestion(marathon.getId());
                     if (goal == null) return;
 
