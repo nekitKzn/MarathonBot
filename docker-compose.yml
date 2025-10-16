@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  marathon-prod:
+    image: nekitvp/marathon:7.2
+    restart: always
+    depends_on:
+      - marathonbot-db
+    expose:
+      - "8081"
+    networks:
+      - marathonbot-prod
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+  marathonbot-db:
+    container_name: marathonbot-db
+    image: postgres:12-alpine
+    restart: always
+    volumes:
+      - pgdata-marathonbot:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    ports:
+      - "9736:5432"
+    networks:
+      - marathonbot-prod
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      TZ: 'Europe/Moscow'
+      PGTZ: 'Europe/Moscow'
+
+networks:
+  marathonbot-prod:
+
+volumes:
+  pgdata-marathonbot:
